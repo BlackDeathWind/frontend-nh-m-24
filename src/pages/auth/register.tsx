@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-context';
+import { useNotification } from '@/lib/notification-context';
 
 interface RegisterForm {
   name: string;
@@ -15,12 +17,24 @@ interface RegisterForm {
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { register: registerUser } = useAuth();
+  const { showNotification } = useNotification();
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>();
   const password = watch('password');
 
-  const onSubmit = (data: RegisterForm) => {
-    console.log(data);
-    // Handle registration logic here
+  const onSubmit = async (data: RegisterForm) => {
+    try {
+      const success = await registerUser(data.name, data.email, data.password);
+      
+      if (success) {
+        showNotification('success', 'Đăng ký thành công! Chào mừng bạn đến với Modern Stationery.');
+        navigate('/');
+      } else {
+        showNotification('error', 'Đăng ký thất bại. Vui lòng thử lại sau.');
+      }
+    } catch (error) {
+      showNotification('error', 'Có lỗi xảy ra khi đăng ký tài khoản.');
+    }
   };
 
   return (

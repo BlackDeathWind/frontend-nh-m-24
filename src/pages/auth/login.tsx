@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-context';
+import { useNotification } from '@/lib/notification-context';
 
 interface LoginForm {
   email: string;
@@ -13,11 +15,23 @@ interface LoginForm {
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showNotification } = useNotification();
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
 
-  const onSubmit = (data: LoginForm) => {
-    console.log(data);
-    // Handle login logic here
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      const success = await login(data.email, data.password);
+      
+      if (success) {
+        showNotification('success', 'Đăng nhập thành công!');
+        navigate('/');
+      } else {
+        showNotification('error', 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.');
+      }
+    } catch (error) {
+      showNotification('error', 'Có lỗi xảy ra khi đăng nhập.');
+    }
   };
 
   return (

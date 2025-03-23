@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag, ChevronLeft, ChevronRight, Plus, Minus, AlertTriangle, Check } from 'lucide-react';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/lib/auth-context';
+import { useNotification } from '@/lib/notification-context';
 import { cn } from '@/lib/utils';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
+  const { isLoggedIn } = useAuth();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
@@ -28,11 +32,13 @@ export default function CartPage() {
     if (couponCode.toUpperCase() === 'DISCOUNT10') {
       setCouponApplied(true);
       setDiscount(0.1); // Giảm 10%
+      showNotification('success', 'Đã áp dụng mã giảm giá 10% thành công!');
     } else if (couponCode.toUpperCase() === 'DISCOUNT20') {
       setCouponApplied(true);
       setDiscount(0.2); // Giảm 20%
+      showNotification('success', 'Đã áp dụng mã giảm giá 20% thành công!');
     } else {
-      alert('Mã giảm giá không hợp lệ hoặc đã hết hạn');
+      showNotification('error', 'Mã giảm giá không hợp lệ hoặc đã hết hạn!');
     }
   };
 
@@ -42,7 +48,14 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    alert('Tính năng thanh toán sẽ được phát triển trong tương lai!');
+    if (!isLoggedIn) {
+      showNotification('warning', 'Vui lòng đăng nhập để tiếp tục thanh toán');
+      navigate('/login');
+      return;
+    }
+
+    // Tiến hành thanh toán nếu đã đăng nhập
+    showNotification('info', 'Tính năng thanh toán sẽ được phát triển trong tương lai!');
     // Chuyển đến trang thanh toán
     // navigate('/checkout');
   };
@@ -176,7 +189,10 @@ export default function CartPage() {
                   
                   <button
                     type="button"
-                    onClick={clearCart}
+                    onClick={() => {
+                      clearCart();
+                      showNotification('success', 'Giỏ hàng đã được xóa!');
+                    }}
                     className="text-sm font-medium text-red-600 hover:text-red-500 flex items-center"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />

@@ -3,13 +3,18 @@ import { ShoppingCart, User, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  // TODO: Replace with actual auth state
-  const isLoggedIn = false;
+  const { isLoggedIn, logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="bg-white shadow-sm">
@@ -50,8 +55,9 @@ export default function Navbar() {
               <>
                 <Button variant="ghost" onClick={() => navigate('/dashboard')}>
                   <User className="h-5 w-5" />
+                  <span className="ml-2 text-sm">{user?.name}</span>
                 </Button>
-                <Button variant="ghost">
+                <Button variant="ghost" onClick={handleLogout}>
                   <LogOut className="h-5 w-5" />
                 </Button>
               </>
@@ -69,7 +75,7 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <div className="flex items-center sm:hidden">
-            <div className="relative mr-4">
+            <div className="mr-4 relative">
               <Button variant="ghost" onClick={() => navigate('/cart')}>
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
@@ -80,22 +86,22 @@ export default function Navbar() {
               </Button>
             </div>
             
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+            <Button 
+              variant="ghost" 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="inline-flex items-center justify-center"
             >
+              <span className="sr-only">Mở menu</span>
               {isMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="block h-6 w-6" aria-hidden="true" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="block h-6 w-6" aria-hidden="true" />
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isMenuOpen && (
         <div className="sm:hidden">
           <div className="space-y-1 pb-3 pt-2">
@@ -127,6 +133,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   className="block w-full px-3 py-2 text-left text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                  onClick={handleLogout}
                 >
                   Đăng xuất
                 </button>
