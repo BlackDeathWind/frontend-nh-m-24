@@ -25,15 +25,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <Button
-        variant="ghost"
-        className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-900"
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft className="h-5 w-5 mr-2" />
-        Quay lại
-      </Button>
-
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Đăng ký tài khoản mới
@@ -158,7 +149,16 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <Button
+                variant="outline"
+                className="flex items-center justify-center"
+                onClick={() => navigate(-1)}
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Quay lại
+              </Button>
+              
               <div className="text-sm text-center">
                 <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
                   Đã có tài khoản? Đăng nhập
