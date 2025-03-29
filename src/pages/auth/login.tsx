@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/lib/notification-context';
 
 interface LoginForm {
-  email: string;
+  identifier: string;
   password: string;
 }
 
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const success = await login(data.email, data.password);
+      const success = await login(data.identifier, data.password);
       
       if (success) {
         showNotification('success', 'Đăng nhập thành công!');
@@ -46,23 +46,26 @@ export default function LoginPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+              <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
+                Email hoặc Số điện thoại
               </label>
               <div className="mt-1">
                 <Input
-                  id="email"
-                  type="email"
-                  {...register('email', {
-                    required: 'Email là bắt buộc',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Email không hợp lệ'
+                  id="identifier"
+                  type="text"
+                  {...register('identifier', {
+                    required: 'Email hoặc số điện thoại là bắt buộc',
+                    validate: value => {
+                      // Kiểm tra nếu là email
+                      const isEmail = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value);
+                      // Kiểm tra nếu là số điện thoại Việt Nam
+                      const isPhone = /^(0|\+84)(\d{9,10})$/.test(value);
+                      return (isEmail || isPhone) || 'Email hoặc số điện thoại không hợp lệ';
                     }
                   })}
                 />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                {errors.identifier && (
+                  <p className="mt-1 text-sm text-red-600">{errors.identifier.message}</p>
                 )}
               </div>
             </div>

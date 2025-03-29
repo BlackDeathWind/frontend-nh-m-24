@@ -10,6 +10,7 @@ import { useNotification } from '@/lib/notification-context';
 interface RegisterForm {
   name: string;
   email: string;
+  phone: string;
   password: string;
   confirmPassword: string;
 }
@@ -24,7 +25,12 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      const success = await registerUser(data.name, data.email, data.password);
+      if (!data.email && !data.phone) {
+        showNotification('error', 'Vui lòng cung cấp ít nhất email hoặc số điện thoại.');
+        return;
+      }
+      
+      const success = await registerUser(data.name, data.password, data.email, data.phone);
       
       if (success) {
         showNotification('success', 'Đăng ký thành công! Chào mừng bạn đến với Modern Stationery.');
@@ -71,15 +77,14 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+              <label htmlFor="email" className="flex items-center text-sm font-medium text-gray-700">
+                Email <span className="ml-1 text-xs text-gray-500">(tùy chọn)</span>
               </label>
               <div className="mt-1">
                 <Input
                   id="email"
                   type="email"
                   {...register('email', {
-                    required: 'Email là bắt buộc',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: 'Email không hợp lệ'
@@ -88,6 +93,28 @@ export default function RegisterPage() {
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="flex items-center text-sm font-medium text-gray-700">
+                Số điện thoại
+              </label>
+              <div className="mt-1">
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="VD: 0912345678"
+                  {...register('phone', {
+                    pattern: {
+                      value: /^(0|\+84)(\d{9,10})$/,
+                      message: 'Số điện thoại không hợp lệ'
+                    }
+                  })}
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
                 )}
               </div>
             </div>
@@ -143,6 +170,11 @@ export default function RegisterPage() {
                   <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
                 )}
               </div>
+            </div>
+
+            <div className="text-sm text-gray-500">
+              <p className="font-medium">Lưu ý:</p>
+              <p>Bạn cần cung cấp ít nhất một trong hai: Email hoặc Số điện thoại</p>
             </div>
 
             <div>
