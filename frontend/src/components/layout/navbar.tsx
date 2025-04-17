@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Menu, X, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Menu, X, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/lib/cart-context';
@@ -58,6 +58,9 @@ export default function Navbar() {
     return user.fullName;
   };
 
+  // Kiểm tra xem người dùng có phải là admin hoặc seller không
+  const canAccessDashboard = user && (user.role === 'admin' || user.role === 'seller');
+
   return (
     <nav
       className={`fixed w-full top-0 z-50 transition-all duration-300 ${
@@ -95,9 +98,9 @@ export default function Navbar() {
               <ShoppingCart size={24} />
               <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems || 0}
-              </span>
+                  </span>
             </NavLink>
-
+            
             {isLoggedIn ? (
               <div className="relative user-dropdown">
                 <button 
@@ -117,6 +120,16 @@ export default function Navbar() {
                       <p className="text-sm font-medium text-gray-900 truncate">{user?.fullName}</p>
                       <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                     </div>
+                    {canAccessDashboard && (
+                      <Link 
+                        to="/dashboard" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <LayoutDashboard size={16} className="mr-2" />
+                        Dashboard
+                      </Link>
+                    )}
                     <Link 
                       to="/profile" 
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
@@ -162,7 +175,7 @@ export default function Navbar() {
               <ShoppingCart size={24} />
               <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems || 0}
-              </span>
+                  </span>
             </NavLink>
             {isLoggedIn && (
               <Link to="/profile" className="text-gray-700 hover:text-blue-600">
@@ -175,11 +188,11 @@ export default function Navbar() {
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-          </div>
         </div>
+      </div>
 
         {/* Mobile menu */}
-        {isMenuOpen && (
+      {isMenuOpen && (
           <div className="md:hidden pt-4 pb-2">
             <div className="flex flex-col space-y-3">
               <NavLink
@@ -192,17 +205,28 @@ export default function Navbar() {
                 Trang chủ
               </NavLink>
               <NavLink
-                to="/products"
+              to="/products"
                 className={({ isActive }) =>
                   isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
                 }
                 onClick={() => setIsMenuOpen(false)}
-              >
-                Sản phẩm
+            >
+              Sản phẩm
               </NavLink>
               
-              {isLoggedIn ? (
-                <>
+            {isLoggedIn ? (
+              <>
+                  {canAccessDashboard && (
+                    <NavLink
+                  to="/dashboard"
+                      className={({ isActive }) =>
+                        isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                      }
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </NavLink>
+                  )}
                   <NavLink
                     to="/profile"
                     className={({ isActive }) =>
@@ -212,37 +236,37 @@ export default function Navbar() {
                   >
                     Tài khoản của tôi
                   </NavLink>
-                  <button
+                <button
                     onClick={() => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
                     className="text-left text-gray-700 hover:text-blue-600"
-                  >
-                    Đăng xuất
-                  </button>
-                </>
-              ) : (
+                >
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
                 <div className="flex flex-col space-y-2 pt-2">
-                  <Link
-                    to="/login"
+                <Link
+                  to="/login"
                     className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 border border-gray-300 rounded text-center"
                     onClick={() => setIsMenuOpen(false)}
-                  >
-                    Đăng nhập
-                  </Link>
-                  <Link
-                    to="/register"
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  to="/register"
                     className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 text-center"
                     onClick={() => setIsMenuOpen(false)}
-                  >
-                    Đăng ký
-                  </Link>
+                >
+                  Đăng ký
+                </Link>
                 </div>
-              )}
-            </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
       </div>
     </nav>
   );
