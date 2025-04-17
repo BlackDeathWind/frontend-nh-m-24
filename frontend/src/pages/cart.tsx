@@ -55,14 +55,12 @@ export default function CartPage() {
     }
 
     // Tiến hành thanh toán nếu đã đăng nhập
-    showNotification('info', 'Tính năng thanh toán sẽ được phát triển trong tương lai!');
-    // Chuyển đến trang thanh toán
-    // navigate('/checkout');
+    navigate('/checkout');
   };
 
   if (items.length === 0) {
     return (
-      <div className="bg-gray-50 min-h-screen py-12">
+      <div className="bg-gray-50 min-h-screen pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-xl mx-auto text-center">
             <ShoppingBag className="h-12 w-12 mx-auto text-gray-400" />
@@ -86,7 +84,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
+    <div className="bg-gray-50 min-h-screen pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Giỏ hàng của bạn</h1>

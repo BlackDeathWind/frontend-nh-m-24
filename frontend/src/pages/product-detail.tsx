@@ -25,7 +25,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 pt-24">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-gray-900">Không tìm thấy sản phẩm</h2>
           <p className="mt-2 text-gray-600">
@@ -70,8 +70,8 @@ export default function ProductDetailPage() {
     .slice(0, 4);
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <div className="bg-gray-50 min-h-screen pb-16 pt-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center mb-8">
           <Link
             to="/products"

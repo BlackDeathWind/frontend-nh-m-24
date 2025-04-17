@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, ReactNode } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Notification, NotificationType, generateId } from './utils';
 
 interface NotificationContextType {
@@ -30,6 +30,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const hideNotification = (id: string) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id));
   };
+
+  // Thiết lập window.__notification để có thể gọi từ bất kỳ đâu
+  useEffect(() => {
+    window.__notification = {
+      showNotification
+    };
+
+    return () => {
+      delete window.__notification;
+    };
+  }, []);
 
   const value = {
     notifications,

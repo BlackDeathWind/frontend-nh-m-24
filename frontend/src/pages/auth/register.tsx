@@ -8,38 +8,47 @@ import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/lib/notification-context';
 
 interface RegisterForm {
-  name: string;
+  fullName: string;
   email: string;
-  phone: string;
+  phoneNumber?: string;
   password: string;
   confirmPassword: string;
+  address?: string;
 }
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, loading } = useAuth();
   const { showNotification } = useNotification();
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>();
-  const password = watch('password');
+  
+  const password = watch("password");
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      if (!data.email && !data.phone) {
-        showNotification('error', 'Vui lòng cung cấp ít nhất email hoặc số điện thoại.');
+      // Kiểm tra xác nhận mật khẩu
+      if (data.password !== data.confirmPassword) {
+        showNotification('error', 'Mật khẩu xác nhận không khớp.');
         return;
       }
       
-      const success = await registerUser(data.name, data.password, data.email, data.phone);
+      const success = await registerUser({
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phoneNumber,
+        address: data.address
+      });
       
       if (success) {
-        showNotification('success', 'Đăng ký thành công! Chào mừng bạn đến với Modern Stationery.');
-        navigate('/');
+        showNotification('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
+        navigate('/login');
       } else {
         showNotification('error', 'Đăng ký thất bại. Vui lòng thử lại sau.');
       }
     } catch (error) {
-      showNotification('error', 'Có lỗi xảy ra khi đăng ký tài khoản.');
+      showNotification('error', 'Có lỗi xảy ra khi đăng ký.');
     }
   };
 
@@ -47,7 +56,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Đăng ký tài khoản mới
+          Đăng ký tài khoản
         </h2>
       </div>
 
@@ -55,14 +64,14 @@ export default function RegisterPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Họ và tên
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                Họ và tên <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
                 <Input
-                  id="name"
+                  id="fullName"
                   type="text"
-                  {...register('name', {
+                  {...register('fullName', {
                     required: 'Họ và tên là bắt buộc',
                     minLength: {
                       value: 2,
@@ -70,21 +79,22 @@ export default function RegisterPage() {
                     }
                   })}
                 />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                {errors.fullName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="flex items-center text-sm font-medium text-gray-700">
-                Email <span className="ml-1 text-xs text-gray-500">(tùy chọn)</span>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
                 <Input
                   id="email"
                   type="email"
                   {...register('email', {
+                    required: 'Email là bắt buộc',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: 'Email không hợp lệ'
@@ -98,30 +108,42 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="phone" className="flex items-center text-sm font-medium text-gray-700">
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
                 Số điện thoại
               </label>
               <div className="mt-1">
                 <Input
-                  id="phone"
+                  id="phoneNumber"
                   type="tel"
-                  placeholder="VD: 0912345678"
-                  {...register('phone', {
+                  {...register('phoneNumber', {
                     pattern: {
                       value: /^(0|\+84)(\d{9,10})$/,
                       message: 'Số điện thoại không hợp lệ'
                     }
                   })}
                 />
-                {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                {errors.phoneNumber && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phoneNumber.message}</p>
                 )}
               </div>
             </div>
 
             <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                Địa chỉ
+              </label>
+              <div className="mt-1">
+                <Input
+                  id="address"
+                  type="text"
+                  {...register('address')}
+                />
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Mật khẩu
+                Mật khẩu <span className="text-red-500">*</span>
               </label>
               <div className="mt-1 relative">
                 <Input
@@ -130,8 +152,12 @@ export default function RegisterPage() {
                   {...register('password', {
                     required: 'Mật khẩu là bắt buộc',
                     minLength: {
-                      value: 6,
-                      message: 'Mật khẩu phải có ít nhất 6 ký tự'
+                      value: 8,
+                      message: 'Mật khẩu phải có ít nhất 8 ký tự'
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                      message: 'Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một số và một ký tự đặc biệt'
                     }
                   })}
                 />
@@ -154,16 +180,16 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Xác nhận mật khẩu
+                Xác nhận mật khẩu <span className="text-red-500">*</span>
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <Input
                   id="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
                   {...register('confirmPassword', {
                     required: 'Xác nhận mật khẩu là bắt buộc',
-                    validate: value =>
-                      value === password || 'Mật khẩu xác nhận không khớp'
+                    validate: value => 
+                      value === password || "Mật khẩu xác nhận không khớp"
                   })}
                 />
                 {errors.confirmPassword && (
@@ -172,15 +198,27 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="text-sm text-gray-500">
-              <p className="font-medium">Lưu ý:</p>
-              <p>Bạn cần cung cấp ít nhất một trong hai: Email hoặc Số điện thoại</p>
-            </div>
-
             <div>
-              <Button type="submit" className="w-full flex justify-center" size="lg">
-                <UserPlus className="mr-2 h-5 w-5" />
-                Đăng ký
+              <Button
+                type="submit"
+                className="w-full flex justify-center"
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang xử lý...
+                  </span>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Đăng ký
+                  </>
+                )}
               </Button>
             </div>
           </form>

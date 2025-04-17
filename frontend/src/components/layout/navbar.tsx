@@ -1,162 +1,249 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { ShoppingCart, User, LogOut, Menu, X, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { totalItems } = useCart();
   const { isLoggedIn, logout, user } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  // Quan sát sự kiện scroll để thay đổi hiệu ứng
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (dropdownOpen && !target.closest('.user-dropdown')) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  // Hiển thị tên ngắn gọn hoặc tên đầy đủ
+  const displayName = () => {
+    if (!user) return '';
+    
+    const names = user.fullName.split(' ');
+    if (names.length > 1) {
+      return names[names.length - 1]; // Lấy tên cuối cùng
+    }
+    return user.fullName;
   };
 
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 justify-between">
-          <div className="flex">
-            <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-blue-600">Modern Stationery</span>
-            </Link>
-          </div>
+    <nav
+      className={`fixed w-full top-0 z-50 transition-all duration-300 ${
+        scrolled ? 'bg-white shadow-md py-2' : 'bg-white/80 backdrop-blur-md py-4'
+      }`}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <Link to="/" className="text-2xl font-bold text-blue-600">E-Shop</Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden sm:flex sm:items-center sm:space-x-8">
-            <Link to="/products" className="text-gray-700 hover:text-blue-600">
-              Sản phẩm
-            </Link>
-            <Link to="/about" className="text-gray-700 hover:text-blue-600">
-              Giới thiệu
-            </Link>
-            <Link to="/contact" className="text-gray-700 hover:text-blue-600">
-              Liên hệ
-            </Link>
-          </div>
-
-          <div className="hidden sm:flex sm:items-center sm:space-x-4">
-            <div className="relative">
-              <Button variant="ghost" onClick={() => navigate('/cart')}>
-                <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white">
-                    {totalItems}
-                  </span>
-                )}
-              </Button>
-            </div>
-            
-            {isLoggedIn ? (
-              <>
-                <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-                  <User className="h-5 w-5" />
-                  <span className="ml-2 text-sm">{user?.name}</span>
-                </Button>
-                <Button variant="ghost" onClick={handleLogout}>
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => navigate('/login')}>
-                  Đăng nhập
-                </Button>
-                <Button onClick={() => navigate('/register')}>
-                  Đăng ký
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="flex items-center sm:hidden">
-            <div className="mr-4 relative">
-              <Button variant="ghost" onClick={() => navigate('/cart')}>
-                <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white">
-                    {totalItems}
-                  </span>
-                )}
-              </Button>
-            </div>
-            
-            <Button 
-              variant="ghost" 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center"
+          {/* Desktop menu */}
+          <div className="hidden md:flex items-center space-x-8">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+              }
             >
-              <span className="sr-only">Mở menu</span>
-              {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {isMenuOpen && (
-        <div className="sm:hidden">
-          <div className="space-y-1 pb-3 pt-2">
-            <Link
+              Trang chủ
+            </NavLink>
+            <NavLink
               to="/products"
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+              className={({ isActive }) =>
+                isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+              }
             >
               Sản phẩm
-            </Link>
-            <Link
-              to="/about"
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-            >
-              Giới thiệu
-            </Link>
-            <Link
-              to="/contact"
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-            >
-              Liên hệ
-            </Link>
+            </NavLink>
+          </div>
+
+          {/* Actions */}
+          <div className="hidden md:flex items-center space-x-4">
+            <NavLink to="/cart" className="text-gray-700 hover:text-blue-600 relative">
+              <ShoppingCart size={24} />
+              <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {totalItems || 0}
+              </span>
+            </NavLink>
+
             {isLoggedIn ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+              <div className="relative user-dropdown">
+                <button 
+                  className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 focus:outline-none"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  Tài khoản
-                </Link>
-                <button
-                  className="block w-full px-3 py-2 text-left text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-                  onClick={handleLogout}
-                >
-                  Đăng xuất
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User size={18} className="text-blue-600" />
+                  </div>
+                  <span className="text-sm font-medium">{displayName()}</span>
+                  <ChevronDown size={16} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-              </>
+                
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden z-20 border border-gray-200 py-1">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900 truncate">{user?.fullName}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
+                    <Link 
+                      to="/profile" 
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <User size={16} className="mr-2" />
+                      Tài khoản của tôi
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setDropdownOpen(false);
+                      }}
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Đăng xuất
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <>
+              <div className="flex items-center space-x-2">
                 <Link
                   to="/login"
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                  className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
                 >
                   Đăng nhập
                 </Link>
                 <Link
                   to="/register"
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Đăng ký
                 </Link>
-              </>
+              </div>
             )}
           </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center space-x-4">
+            <NavLink to="/cart" className="text-gray-700 hover:text-blue-600 relative">
+              <ShoppingCart size={24} />
+              <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {totalItems || 0}
+              </span>
+            </NavLink>
+            {isLoggedIn && (
+              <Link to="/profile" className="text-gray-700 hover:text-blue-600">
+                <User size={24} />
+              </Link>
+            )}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-700 hover:text-blue-600 focus:outline-none"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
-      )}
+
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="md:hidden pt-4 pb-2">
+            <div className="flex flex-col space-y-3">
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                }
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Trang chủ
+              </NavLink>
+              <NavLink
+                to="/products"
+                className={({ isActive }) =>
+                  isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                }
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Sản phẩm
+              </NavLink>
+              
+              {isLoggedIn ? (
+                <>
+                  <NavLink
+                    to="/profile"
+                    className={({ isActive }) =>
+                      isActive ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                    }
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Tài khoản của tôi
+                  </NavLink>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="text-left text-gray-700 hover:text-blue-600"
+                  >
+                    Đăng xuất
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col space-y-2 pt-2">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 border border-gray-300 rounded text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Đăng nhập
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Đăng ký
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

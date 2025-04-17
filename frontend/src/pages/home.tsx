@@ -10,7 +10,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-24">
       {/* Hero Section */}
       <div className="relative bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">

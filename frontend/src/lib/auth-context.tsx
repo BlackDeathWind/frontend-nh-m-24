@@ -1,104 +1,181 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { authAPI } from './api';
 
 interface User {
   id: string;
-  name: string;
-  email?: string;
-  phone?: string;
+  email: string;
+  fullName: string;
+  role: string;
+  phoneNumber?: string;
+  address?: string;
+  avatarUrl?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (identifier: string, password: string) => Promise<boolean>;
-  register: (name: string, password: string, email?: string, phone?: string) => Promise<boolean>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (userData: { 
+    email: string;
+    password: string;
+    fullName: string;
+    phoneNumber?: string;
+    address?: string;
+  }) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  updateProfile: (userData: {
+    fullName: string;
+    phoneNumber?: string;
+    address?: string;
+  }) => Promise<boolean>;
+  loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState<boolean>(false);
 
   const isLoggedIn = user !== null;
 
-  // Mô phỏng đăng nhập - trong thực tế sẽ gọi API
-  const login = async (identifier: string, password: string): Promise<boolean> => {
-    // Giả lập việc gọi API
-    // Trong dự án thực tế, thay thế bằng gọi API thực sự
+  // Đăng nhập sử dụng API thực
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      // Mô phỏng đăng nhập thành công
-      if (identifier && password.length >= 6) {
-        const isEmail = identifier.includes('@');
-        const mockUser: User = {
-          id: '1',
-          name: 'Người dùng',
-        };
-        
-        if (isEmail) {
-          mockUser.email = identifier;
-        } else {
-          mockUser.phone = identifier;
-        }
-        
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
+      const response = await authAPI.login(email, password);
+      
+      if (response.status === 'success' && response.data && response.data.user) {
+        setUser(response.data.user);
         return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Lỗi đăng nhập:', error);
-      return false;
-    }
-  };
-
-  // Mô phỏng đăng ký - trong thực tế sẽ gọi API
-  const register = async (name: string, password: string, email?: string, phone?: string): Promise<boolean> => {
-    // Giả lập việc gọi API
-    // Trong dự án thực tế, thay thế bằng gọi API thực sự
-    try {
-      // Kiểm tra xem có ít nhất email hoặc số điện thoại
-      if (!email && !phone) {
+      } else {
+        setError(response.message || 'Đăng nhập thất bại');
         return false;
       }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Đăng nhập thất bại';
+      setError(errorMsg);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Đăng ký sử dụng API thực
+  const register = async (userData: { 
+    email: string;
+    password: string;
+    fullName: string;
+    phoneNumber?: string;
+    address?: string;
+  }): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authAPI.register(userData);
       
-      // Mô phỏng đăng ký thành công
-      if (name && password.length >= 6) {
-        const mockUser: User = {
-          id: '1',
-          name: name,
-          email: email,
-          phone: phone
-        };
-        
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
+      if (response.status === 'success') {
+        // Sau khi đăng ký thành công, thường sẽ tự động đăng nhập
+        // hoặc chuyển người dùng đến trang đăng nhập
         return true;
+      } else {
+        setError(response.message || 'Đăng ký thất bại');
+        return false;
       }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Đăng ký thất bại';
+      setError(errorMsg);
       return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Đăng xuất sử dụng API thực
+  const logout = async (): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await authAPI.logout();
+      setUser(null);
+      return true;
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Đăng xuất thất bại';
+      setError(errorMsg);
+      // Ngay cả khi API bị lỗi, chúng ta vẫn muốn đăng xuất trên phía client
+      setUser(null);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cập nhật thông tin profile người dùng
+  const updateProfile = async (userData: {
+    fullName: string;
+    phoneNumber?: string;
+    address?: string;
+  }): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authAPI.updateProfile(userData);
+      
+      if (response.status === 'success' && response.data) {
+        // Cập nhật thông tin người dùng trong state
+        setUser(prev => prev ? { ...prev, ...response.data } : null);
+        return true;
+      } else {
+        setError(response.message || 'Cập nhật thông tin thất bại');
+        return false;
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Cập nhật thông tin thất bại';
+      setError(errorMsg);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Lấy thông tin người dùng từ token lưu trong localStorage
+  const fetchCurrentUser = async () => {
+    // Kiểm tra xem có token trong localStorage không
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setInitialized(true);
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const response = await authAPI.getProfile();
+      
+      if (response.status === 'success' && response.data) {
+        setUser(response.data);
+      }
     } catch (error) {
-      console.error('Lỗi đăng ký:', error);
-      return false;
+      console.error('Không thể lấy thông tin người dùng:', error);
+      // Xóa token nếu không hợp lệ
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
+      setInitialized(true);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
-
-  // Kiểm tra người dùng đã đăng nhập từ localStorage khi khởi động
+  // Kiểm tra người dùng đã đăng nhập từ token khi khởi động
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Lỗi khi phân tích dữ liệu người dùng từ localStorage:', error);
-        localStorage.removeItem('user');
-      }
-    }
+    fetchCurrentUser();
   }, []);
 
   const value = {
@@ -107,7 +184,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     register,
     logout,
+    updateProfile,
+    loading,
+    error
   };
+
+  // Không render gì nếu chưa khởi tạo xong
+  if (!initialized) {
+    return null;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
