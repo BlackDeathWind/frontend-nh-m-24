@@ -255,7 +255,7 @@ export default function CartPage() {
                       )}
                       disabled={couponApplied || !couponCode}
                     >
-                      {couponApplied ? 'Áp dụng' : 'Áp dụng'}
+                      {couponApplied ? <span className="flex items-center"><Check className="h-4 w-4 mr-1" />Đã áp dụng</span> : 'Áp dụng'}
                     </button>
                   </div>
                   

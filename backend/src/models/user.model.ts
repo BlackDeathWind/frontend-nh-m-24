@@ -12,7 +12,7 @@ class User extends Model<IUser, UserCreationAttributes> implements IUser {
   public email!: string;
   public password!: string;
   public fullName!: string;
-  public role!: 'user' | 'admin' | 'manager';
+  public role!: 'user' | 'admin' | 'seller';
   public isActive!: boolean;
   public phoneNumber?: string;
   public address?: string;
@@ -54,7 +54,7 @@ User.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('user', 'admin', 'manager'),
+      type: DataTypes.ENUM('user', 'admin', 'seller'),
       defaultValue: 'user',
     },
     isActive: {

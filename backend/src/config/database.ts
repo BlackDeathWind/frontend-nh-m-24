@@ -2,7 +2,7 @@ import { Sequelize } from 'sequelize';
 import config from './config';
 import logger from '../utils/logger';
 
-// Tạo đối tượng kết nối Sequelize
+// Tạo đối tượng kết nối Sequelize với SQL Server
 const sequelize = new Sequelize(config.DB.NAME, config.DB.USER, config.DB.PASSWORD, {
   host: config.DB.HOST,
   port: config.DB.PORT,

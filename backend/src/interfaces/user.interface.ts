@@ -3,7 +3,7 @@ export interface IUser {
   email: string;
   password: string;
   fullName: string;
-  role: 'user' | 'admin' | 'manager';
+  role: 'user' | 'admin' | 'seller';
   isActive: boolean;
   phoneNumber?: string;
   address?: string;
@@ -19,7 +19,7 @@ export interface IUserCreate {
   fullName: string;
   phoneNumber?: string;
   address?: string;
-  role?: 'user' | 'admin' | 'manager';
+  role?: 'user' | 'admin' | 'seller';
 }
 
 export interface IUserLogin {
@@ -33,7 +33,7 @@ export interface IUserUpdate {
   address?: string;
   avatarUrl?: string;
   isActive?: boolean;
-  role?: 'user' | 'admin' | 'manager';
+  role?: 'user' | 'admin' | 'seller';
 }
 
 export interface IUserProfile {

@@ -1,6 +1,15 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Notification, NotificationType, generateId } from './utils';
 
+// Mở rộng interface Window để TypeScript hiểu thuộc tính __notification
+declare global {
+  interface Window {
+    __notification?: {
+      showNotification: (type: NotificationType, message: string, duration?: number) => string;
+    };
+  }
+}
+
 interface NotificationContextType {
   notifications: Notification[];
   showNotification: (type: NotificationType, message: string, duration?: number) => void;
