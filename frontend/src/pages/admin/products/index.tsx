@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Search, Filter, Edit, Trash2, Plus, ExternalLink, AlertCircle } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Plus, ExternalLink, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Product {

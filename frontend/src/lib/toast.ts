@@ -33,7 +33,7 @@ export const useToast = () => {
 declare global {
   interface Window {
     __notification?: {
-      showNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string, duration?: number) => void;
+      showNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string, duration?: number) => string;
     };
   }
 } 

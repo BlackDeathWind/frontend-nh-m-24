@@ -26,6 +26,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Phục vụ favicon.ico và các tệp tĩnh khác
+app.use(express.static(path.join(__dirname, '..')));
+
 // Trong môi trường phát triển, bỏ qua Redis và session middleware
 if (process.env.NODE_ENV === 'development' && process.env.SKIP_REDIS === 'true') {
   logger.info('Đang chạy ở chế độ phát triển mà không có Redis');

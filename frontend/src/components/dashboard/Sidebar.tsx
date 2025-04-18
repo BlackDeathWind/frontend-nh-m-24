@@ -28,7 +28,6 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   const isAdmin = user?.role === 'admin';
-  const isSeller = user?.role === 'seller';
   const dashboardPrefix = isAdmin ? '/admin' : '/seller';
   
   const toggleMenu = (menu: string) => {

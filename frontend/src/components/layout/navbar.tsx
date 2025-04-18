@@ -1,7 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, LogOut, Menu, X, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
 
