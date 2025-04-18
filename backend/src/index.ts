@@ -58,7 +58,7 @@ app.get('/', (req: Request, res: Response) => {
           body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
           }
@@ -66,6 +66,10 @@ app.get('/', (req: Request, res: Response) => {
             color: #333;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
+          }
+          h2 {
+            margin-top: 30px;
+            color: #444;
           }
           .endpoints {
             background: #f5f5f5;
@@ -80,10 +84,50 @@ app.get('/', (req: Request, res: Response) => {
             display: inline-block;
             padding: 3px 8px;
             border-radius: 3px;
-            background: #2196F3;
-            color: white;
             font-size: 12px;
             margin-right: 10px;
+            min-width: 60px;
+            text-align: center;
+          }
+          .get {
+            background: #2196F3;
+            color: white;
+          }
+          .post {
+            background: #4CAF50;
+            color: white;
+          }
+          .put {
+            background: #FF9800;
+            color: white;
+          }
+          .delete {
+            background: #F44336;
+            color: white;
+          }
+          .notes {
+            font-size: 13px;
+            color: #777;
+            font-style: italic;
+          }
+          .role {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            background: #E1E1E1;
+            color: #333;
+            margin-left: 5px;
+          }
+          .section {
+            margin-bottom: 30px;
+          }
+          .info {
+            background: #E8F4FD;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
           }
         </style>
       </head>
@@ -91,30 +135,144 @@ app.get('/', (req: Request, res: Response) => {
         <h1>E-commerce API</h1>
         <p>Chào mừng đến với API của ứng dụng E-commerce! API này cung cấp các endpoints để quản lý người dùng, sản phẩm và đơn hàng.</p>
         
-        <h2>Trạng thái máy chủ</h2>
-        <p>Máy chủ đang hoạt động bình thường! Kiểm tra sức khỏe của máy chủ tại: <a href="/health">/health</a></p>
+        <div class="info">
+          <h3>Thông tin máy chủ</h3>
+          <p>Máy chủ đang hoạt động bình thường! Kiểm tra sức khỏe của máy chủ tại: <a href="/health">/health</a></p>
+          
+          <h3>Tài khoản mẫu (Chế độ phát triển)</h3>
+          <p><strong>Admin:</strong> email: admin@example.com | password: Admin123!</p>
+          <p><strong>Seller:</strong> email: seller@example.com | password: Seller123!</p>
+        </div>
         
         <h2>API Endpoints</h2>
-        <div class="endpoints">
-          <div class="endpoint">
-            <span class="method">POST</span>
-            <span>/api/auth/register</span> - Đăng ký người dùng mới
-          </div>
-          <div class="endpoint">
-            <span class="method">POST</span>
-            <span>/api/auth/login</span> - Đăng nhập
-          </div>
-          <div class="endpoint">
-            <span class="method">POST</span>
-            <span>/api/auth/logout</span> - Đăng xuất
-          </div>
-          <div class="endpoint">
-            <span class="method">GET</span>
-            <span>/api/auth/profile</span> - Lấy thông tin người dùng hiện tại
+        
+        <div class="section">
+          <h3>Authentication</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/auth/register</span> - Đăng ký người dùng mới
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/auth/login</span> - Đăng nhập
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/auth/logout</span> - Đăng xuất
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/auth/profile</span> - Lấy thông tin người dùng hiện tại
+            </div>
+            <div class="endpoint">
+              <span class="method put">PUT</span>
+              <span>/api/auth/profile</span> - Cập nhật thông tin người dùng
+            </div>
           </div>
         </div>
         
-        <p>Xem thêm tài liệu API đầy đủ để biết thêm chi tiết về các endpoints khác.</p>
+        <div class="section">
+          <h3>Products</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/products</span> - Lấy danh sách sản phẩm
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/products/:id</span> - Lấy thông tin chi tiết sản phẩm
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/products</span> - Tạo sản phẩm mới
+              <span class="role">admin</span>
+              <span class="role">seller</span>
+            </div>
+            <div class="endpoint">
+              <span class="method put">PUT</span>
+              <span>/api/products/:id</span> - Cập nhật sản phẩm
+              <span class="role">admin</span>
+              <span class="role">seller</span>
+            </div>
+            <div class="endpoint">
+              <span class="method delete">DELETE</span>
+              <span>/api/products/:id</span> - Xóa sản phẩm
+              <span class="role">admin</span>
+              <span class="role">seller</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Categories</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/categories</span> - Lấy danh sách danh mục
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/categories/:id</span> - Lấy thông tin chi tiết danh mục
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/categories</span> - Tạo danh mục mới
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method put">PUT</span>
+              <span>/api/categories/:id</span> - Cập nhật danh mục
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method delete">DELETE</span>
+              <span>/api/categories/:id</span> - Xóa danh mục
+              <span class="role">admin</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Orders</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/orders</span> - Lấy danh sách đơn hàng của người dùng hiện tại
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/orders/:id</span> - Lấy thông tin chi tiết đơn hàng
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/orders</span> - Tạo đơn hàng mới
+            </div>
+            <div class="endpoint">
+              <span class="method put">PUT</span>
+              <span>/api/orders/:id/status</span> - Cập nhật trạng thái đơn hàng
+              <span class="role">admin</span>
+              <span class="role">seller</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>WebSocket Events</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method">Connection</span> - Thiết lập kết nối với server
+            </div>
+            <div class="endpoint">
+              <span class="method">Authentication</span> - Xác thực WebSocket với JWT
+            </div>
+            <div class="endpoint">
+              <span class="method">Notifications</span> - Nhận thông báo real-time
+            </div>
+          </div>
+        </div>
+        
+        <p class="notes">Xem chi tiết đầy đủ trong file README.md của dự án.</p>
       </body>
     </html>
   `);

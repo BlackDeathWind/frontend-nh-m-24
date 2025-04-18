@@ -24,6 +24,17 @@ const mockUser = {
   updatedAt: new Date()
 };
 
+// Seller giả cho chế độ phát triển
+const mockSeller = {
+  id: 'mock-seller-id-456',
+  email: 'seller@example.com',
+  fullName: 'Seller Account',
+  role: 'seller',
+  isActive: true,
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
+
 // Hàm kiểm tra xem có đang bỏ qua DB hay không
 const isSkipDB = () => process.env.SKIP_DB === 'true' && process.env.NODE_ENV === 'development';
 
@@ -104,6 +115,29 @@ const AuthController = {
             { user: mockUser, token: mockToken }, 
             'Đăng nhập thành công (chế độ giả lập).'
           );
+        } else if (email === 'seller@example.com' && password === 'Seller123!') {
+          const mockToken = 'mock-jwt-token-for-seller';
+          
+          // Lưu thông tin vào session nếu session tồn tại
+          if (req.session && process.env.SKIP_REDIS !== 'true') {
+            req.session.userId = mockSeller.id;
+            req.session.userRole = mockSeller.role;
+          }
+
+          // Đặt cookie JWT nếu cần
+          if (process.env.SKIP_REDIS !== 'true') {
+            res.cookie('jwt', mockToken, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+            });
+          }
+
+          return successResponse(
+            res, 
+            { user: mockSeller, token: mockToken }, 
+            'Đăng nhập thành công (chế độ giả lập).'
+          );
         } else {
           return next(new AppError('Email hoặc mật khẩu không chính xác.', 401));
         }
@@ -178,6 +212,15 @@ const AuthController = {
 
       // Nếu đang bỏ qua DB, trả về user giả
       if (isSkipDB()) {
+        // Kiểm tra xem có phải là tài khoản seller không
+        if (req.user && req.user.role === 'seller') {
+          return successResponse(
+            res, 
+            mockSeller, 
+            'Lấy thông tin người dùng thành công (chế độ giả lập).'
+          );
+        }
+        
         return successResponse(
           res, 
           mockUser, 
@@ -209,10 +252,13 @@ const AuthController = {
 
       // Nếu đang bỏ qua DB, trả về user giả đã cập nhật
       if (isSkipDB()) {
-        // Cập nhật thông tin mockUser
+        // Xác định user cần cập nhật dựa trên role
+        const baseUser = req.user && req.user.role === 'seller' ? mockSeller : mockUser;
+        
+        // Cập nhật thông tin user
         const updatedUser = { 
-          ...mockUser,
-          fullName: fullName || mockUser.fullName,
+          ...baseUser,
+          fullName: fullName || baseUser.fullName,
           phoneNumber: phoneNumber || '',
           address: address || '',
           updatedAt: new Date()
