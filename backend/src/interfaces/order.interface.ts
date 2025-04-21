@@ -5,7 +5,7 @@ export interface IOrder {
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   totalAmount: number;
   shippingAddress: string;
-  paymentMethod: 'cash' | 'credit_card' | 'paypal' | 'transfer';
+  paymentMethod: 'cod' | 'digital';
   paymentStatus: 'pending' | 'paid' | 'failed';
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +29,9 @@ export interface IOrderCreate {
     quantity: number;
   }[];
   shippingAddress: string;
-  paymentMethod: 'cash' | 'credit_card' | 'paypal' | 'transfer';
+  paymentMethod: 'cod' | 'digital';
+  notes?: string;
+  digitalWallet?: 'momo' | 'zalopay' | 'vnpay';
 }
 
 export interface IOrderUpdate {

@@ -158,5 +158,90 @@ export const cartAPI = {
   },
 };
 
+// API Đơn hàng
+export const orderAPI = {
+  createOrder: async (orderData: {
+    items: {
+      productId: string;
+      quantity: number;
+    }[];
+    shippingAddress: string;
+    paymentMethod: 'cod' | 'digital';
+    notes?: string;
+    digitalWallet?: 'momo' | 'zalopay' | 'vnpay';
+  }) => {
+    try {
+      const response = await api.post('/orders', orderData);
+      return response.data;
+    } catch (error) {
+      console.error('Create order error:', error);
+      throw error;
+    }
+  },
+
+  getOrders: async () => {
+    try {
+      const response = await api.get('/orders');
+      return response.data;
+    } catch (error) {
+      console.error('Get orders error:', error);
+      throw error;
+    }
+  },
+
+  getOrderById: async (id: string) => {
+    try {
+      const response = await api.get(`/orders/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Get order ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  cancelOrder: async (id: string) => {
+    try {
+      const response = await api.put(`/orders/${id}/cancel`);
+      return response.data;
+    } catch (error) {
+      console.error(`Cancel order ${id} error:`, error);
+      throw error;
+    }
+  },
+};
+
+// API Thanh toán
+export const paymentAPI = {
+  // Khởi tạo thanh toán qua ví điện tử
+  initiateDigitalWalletPayment: async (
+    orderId: string, 
+    wallet: 'momo' | 'zalopay' | 'vnpay',
+    returnUrl: string
+  ) => {
+    try {
+      const response = await api.post(`/payments/digital-wallet`, {
+        orderId,
+        wallet,
+        returnUrl
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Digital wallet payment initiation error:', error);
+      throw error;
+    }
+  },
+
+  // Kiểm tra trạng thái thanh toán
+  checkPaymentStatus: async (orderId: string) => {
+    try {
+      const response = await api.get(`/payments/status/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Check payment status for order ${orderId} error:`, error);
+      throw error;
+    }
+  },
+};
+
 // Xuất các API khác khi cần
 export default api; 

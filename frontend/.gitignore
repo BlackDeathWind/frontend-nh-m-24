@@ -47,3 +47,6 @@ build
 .next
 out
 .vercel
+
+# Other
+ket_noi_sql_server.txt

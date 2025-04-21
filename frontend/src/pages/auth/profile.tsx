@@ -1,14 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth-context';
-import { User, Mail, Phone, MapPin, Edit, Camera, Save, X, CheckCircle, UserCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Edit, Camera, Save, X, CheckCircle, UserCircle, ShoppingCart } from 'lucide-react';
 import { showToast } from '../../lib/toast';
 import { AlertDialog } from '../../components/ui/alert-dialog';
 import { Breadcrumb } from '../../components/ui/breadcrumb';
 
+// Interface cho location state
+interface LocationState {
+  openEditMode?: boolean;
+  fromCheckout?: boolean;
+}
+
 const Profile = () => {
   const { user, isLoggedIn, updateProfile, loading } = useAuth();
   const navigate = useNavigate();
+  
+  // Lấy location để kiểm tra state
+  const location = useLocation();
+  const locationState = location.state as LocationState;
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -25,6 +35,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [fromCheckout, setFromCheckout] = useState(false);
 
   useEffect(() => {
     // Nếu không đăng nhập, chuyển hướng đến trang đăng nhập
@@ -43,8 +54,21 @@ const Profile = () => {
       
       setFormData(userData);
       setOriginalData(userData);
+      
+      // Nếu có state yêu cầu mở chế độ chỉnh sửa
+      if (locationState?.openEditMode) {
+        setIsEditing(true);
+        
+        // Kiểm tra nếu điều hướng từ trang checkout
+        if (locationState?.fromCheckout) {
+          setFromCheckout(true);
+        }
+        
+        // Xóa state sau khi đã sử dụng để tránh mở lại khi refresh
+        navigate(location.pathname, { replace: true, state: undefined });
+      }
     }
-  }, [isLoggedIn, user, navigate]);
+  }, [isLoggedIn, user, navigate, location.pathname, locationState]);
 
   // Kiểm tra xem form có thay đổi không
   const hasChanges = useCallback(() => {
@@ -95,6 +119,11 @@ const Profile = () => {
         setTimeout(() => {
           setUpdateSuccess(false);
           setIsEditing(false);
+          
+          // Nếu người dùng đến từ checkout, đề xuất quay lại
+          if (fromCheckout) {
+            setFromCheckout(false);
+          }
         }, 2000);
       }
     } catch (error) {
@@ -233,6 +262,29 @@ const Profile = () => {
                   </div>
                 )}
                 
+                {/* Thêm thông báo cho người dùng khi đến từ trang checkout */}
+                {fromCheckout && (
+                  <div className="mb-6 p-4 rounded-md bg-blue-50 border border-blue-100 text-blue-800">
+                    <div className="flex">
+                      <ShoppingCart className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium">Bạn đến từ trang thanh toán</p>
+                        <p className="mt-1 text-sm">
+                          Sau khi cập nhật thông tin, bạn có thể quay lại trang thanh toán để hoàn tất đơn hàng.
+                        </p>
+                        <button 
+                          type="button"
+                          onClick={() => navigate('/checkout')}
+                          className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800 focus:outline-none flex items-center"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          Quay lại thanh toán
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div>
@@ -360,6 +412,27 @@ const Profile = () => {
         cancelText="Tiếp tục chỉnh sửa"
         variant="danger"
       />
+      
+      {/* Hiển thị thông báo sau khi cập nhật thành công từ checkout */}
+      {updateSuccess && fromCheckout && (
+        <div className="fixed bottom-4 right-4 p-4 bg-white rounded-lg shadow-lg border border-green-100 w-72 animate-fade-in">
+          <div className="flex">
+            <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-800">Cập nhật thông tin thành công!</p>
+              <p className="mt-1 text-sm text-gray-600">
+                Bạn có thể quay lại trang thanh toán để hoàn tất đơn hàng.
+              </p>
+              <button 
+                onClick={() => navigate('/checkout')}
+                className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 w-full"
+              >
+                Quay lại thanh toán
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
