@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, ShoppingBag, Users, TrendingUp, AlertTriangle, Package, Truck, DollarSign } from 'lucide-react';
+import { ShoppingBag, Users, TrendingUp, DollarSign, AlertTriangle, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Giả lập dữ liệu cho biểu đồ

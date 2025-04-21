@@ -2,6 +2,7 @@
 
 Frontend cho ứng dụng E-commerce phân phối văn phòng phẩm hiện đại, được xây dựng với React, TypeScript và Tailwind CSS.
 
+Code bởi Phạm Nguyễn Chu Nguyên - 21050043
 ## Công nghệ sử dụng
 
 - **Framework**: React với TypeScript

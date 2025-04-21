@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
 import { Notification, NotificationType, generateId } from './utils';
 
 // Mở rộng interface Window để TypeScript hiểu thuộc tính __notification
@@ -51,11 +51,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     notifications,
     showNotification,
     hideNotification,
-  };
+  }), [notifications]);
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };

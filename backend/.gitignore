@@ -45,3 +45,6 @@ coverage
 .npm-debug.log*
 yarn-debug.log*
 yarn-error.log* 
+
+# Other
+ket_noi_sql_server.txt

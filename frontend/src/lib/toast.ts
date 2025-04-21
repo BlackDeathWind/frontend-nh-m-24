@@ -9,8 +9,10 @@ export const showToast = (type: 'success' | 'error' | 'warning' | 'info', messag
     }
     // Nếu không, hiện console
     console.log(`Toast ${type}: ${message}`);
+    return '';
   } catch (error) {
     console.error('Không thể hiển thị thông báo:', error);
+    return '';
   }
 };
 

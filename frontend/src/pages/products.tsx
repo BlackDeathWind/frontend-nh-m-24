@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Star, Search, Filter, ShoppingCart } from 'lucide-react';
 import { products } from '@/lib/data';
@@ -15,6 +15,7 @@ export default function ProductsPage() {
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { addItem } = useCart();
+  const isInitialMount = useRef(true);
 
   const categories = [...new Set(products.map(product => product.category))];
   const priceRanges = [
@@ -33,7 +34,7 @@ export default function ProductsPage() {
     { value: 'rating-desc', label: 'Đánh giá cao nhất' },
   ];
 
-  // Xử lý tham số truy vấn từ URL khi trang được tải
+  // Chỉ xử lý tham số URL khi component được mount lần đầu
   useEffect(() => {
     const categoryParam = searchParams.get('category');
     if (categoryParam) {
@@ -44,25 +45,27 @@ export default function ProductsPage() {
         setFilters(prev => ({ ...prev, category: decodedCategory }));
       } else {
         console.warn(`Danh mục "${decodedCategory}" không tồn tại trong dữ liệu`);
-        // Nếu danh mục không tồn tại, hiển thị tất cả sản phẩm
-        setFilters(prev => ({ ...prev, category: undefined }));
       }
     }
-  }, [searchParams, categories]);
+  }, []); // Chỉ chạy một lần khi component được mount
 
-  // Cập nhật searchParams khi filters thay đổi
+  // Cập nhật URL khi filters thay đổi (sau lần mount đầu tiên)
   useEffect(() => {
-    const newSearchParams = new URLSearchParams(searchParams);
-    
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const newSearchParams = new URLSearchParams();
+      
     if (filters.category) {
       newSearchParams.set('category', filters.category);
-    } else {
-      newSearchParams.delete('category');
     }
-    
+      
     setSearchParams(newSearchParams, { replace: true });
-  }, [filters.category, setSearchParams, searchParams]);
+  }, [filters.category, setSearchParams]);
 
+  // Lọc và hiển thị sản phẩm
   useEffect(() => {
     let result = [...products];
     

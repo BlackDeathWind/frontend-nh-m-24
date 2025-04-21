@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { authAPI } from './api';
 
 interface User {
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isLoggedIn = user !== null;
 
   // Đăng nhập sử dụng API thực
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
     
@@ -64,10 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Đăng ký sử dụng API thực
-  const register = async (userData: { 
+  const register = useCallback(async (userData: { 
     email: string;
     password: string;
     fullName: string;
@@ -95,10 +95,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Đăng xuất sử dụng API thực
-  const logout = async (): Promise<boolean> => {
+  const logout = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
     
@@ -115,10 +115,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Cập nhật thông tin profile người dùng
-  const updateProfile = async (userData: {
+  const updateProfile = useCallback(async (userData: {
     fullName: string;
     phoneNumber?: string;
     address?: string;
@@ -144,10 +144,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Lấy thông tin người dùng từ token lưu trong localStorage
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     // Kiểm tra xem có token trong localStorage không
     const token = localStorage.getItem('token');
     if (!token) {
@@ -171,14 +171,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       setInitialized(true);
     }
-  };
+  }, []);
 
   // Kiểm tra người dùng đã đăng nhập từ token khi khởi động
   useEffect(() => {
     fetchCurrentUser();
-  }, []);
+  }, [fetchCurrentUser]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     isLoggedIn,
     login,
@@ -187,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     updateProfile,
     loading,
     error
-  };
+  }), [user, isLoggedIn, login, register, logout, updateProfile, loading, error]);
 
   // Không render gì nếu chưa khởi tạo xong
   if (!initialized) {
