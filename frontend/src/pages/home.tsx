@@ -1,7 +1,32 @@
 import { Link } from 'react-router-dom';
-import { PenLine, BookOpen, Palette, ShoppingBag } from 'lucide-react';
+import { PenLine, BookOpen, Palette, ShoppingBag, ArrowRight, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+
+// Import css module
+import styles from '@/styles/home.module.css';
+
+// Import animation variants
+import {
+  containerVariants,
+  itemVariants,
+  buttonVariants,
+  fadeInUpVariants,
+  cardHoverVariants,
+  iconHoverVariants,
+  scrollIndicatorVariants,
+  linkHoverVariants
+} from '@/animations/variants';
 
 export default function HomePage() {
+  const [isVisible, setIsVisible] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<number | null>(null);
+
+  useEffect(() => {
+    setIsVisible(true);
+    // Thiết lập hiệu ứng parallax khi trang được tải
+  }, []);
+
   const categories = [
     { name: 'Bút viết', icon: PenLine, description: 'Bút bi, bút mực, bút chì và các loại bút khác' },
     { name: 'Sổ & Vở', icon: BookOpen, description: 'Sổ tay, vở ghi chép các loại' },
@@ -10,77 +35,144 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24">
-      {/* Hero Section */}
-      <div className="relative bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-              <span className="block">Modern Stationery Store</span>
-              <span className="block text-blue-600">Văn phòng phẩm hiện đại</span>
-            </h1>
-            <p className="mx-auto mt-3 max-w-md text-base text-gray-500 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
-              Khám phá bộ sưu tập văn phòng phẩm đa dạng và hiện đại. Từ bút viết cao cấp đến các dụng cụ học tập sáng tạo.
-            </p>
-            <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
-              <div className="rounded-md shadow">
-                <Link
-                  to="/products"
-                  className="flex w-full items-center justify-center rounded-md border border-transparent bg-blue-600 px-8 py-3 text-base font-medium text-white hover:bg-blue-700 md:py-4 md:px-10 md:text-lg"
-                >
-                  Xem sản phẩm
-                </Link>
-              </div>
-              <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-                <Link
-                  to="/register"
-                  className="flex w-full items-center justify-center rounded-md border border-transparent bg-white px-8 py-3 text-base font-medium text-blue-600 hover:bg-gray-50 md:py-4 md:px-10 md:text-lg"
-                >
-                  Đăng ký ngay
-                </Link>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 overflow-hidden">
+      {/* Hero Section with Parallax */}
+      <section className={styles.heroSection}>
+        <div className={styles.heroBackground}>
+          <div className={styles.heroOverlay}></div>
+          <div 
+            className={styles.heroBackgroundImage}
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1530025809667-59a078ea6e51?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80')",
+              transform: isVisible ? 'scale(1.05)' : 'scale(1.15)',
+              transition: 'transform 3s ease-out'
+            }}
+          ></div>
         </div>
-      </div>
 
-      {/* Categories Section */}
-      <div className="bg-gray-50 py-12 sm:py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Danh mục sản phẩm</h2>
-            <p className="mt-3 text-xl text-gray-500">Khám phá các danh mục sản phẩm đa dạng của chúng tôi</p>
-          </div>
+        <motion.div 
+          className={styles.heroContent}
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
+          <motion.h1 
+            className={styles.heroTitle}
+            variants={itemVariants}
+          >
+            <span className={styles.heroTitleGradient}>Modern Stationery Store</span>
+            <span className={styles.heroTitleSecondary}>Văn phòng phẩm hiện đại</span>
+          </motion.h1>
+          
+          <motion.p 
+            className={styles.heroDescription}
+            variants={itemVariants}
+          >
+            Khám phá bộ sưu tập văn phòng phẩm đa dạng và hiện đại. Từ bút viết cao cấp đến các dụng cụ học tập sáng tạo.
+          </motion.p>
+          
+          <motion.div 
+            className={styles.heroButtonContainer}
+            variants={itemVariants}
+          >
+            <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+              <Link
+                to="/products"
+                className="group relative inline-flex w-full sm:w-auto items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 text-center text-sm font-medium text-white"
+              >
+                <span className="relative flex w-full items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 px-8 py-3.5 transition-all duration-300 ease-out group-hover:bg-opacity-0 md:py-4 md:px-10 md:text-lg">
+                  <span>Xem sản phẩm</span>
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </span>
+              </Link>
+            </motion.div>
+            <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+              <Link
+                to="/register"
+                className="group relative inline-flex w-full sm:w-auto items-center justify-center rounded-lg bg-white p-0.5 text-center text-sm font-medium border border-transparent"
+              >
+                <span className="relative flex w-full items-center justify-center rounded-md bg-white px-8 py-3.5 text-blue-600 transition-all duration-300 ease-out md:py-4 md:px-10 md:text-lg">
+                  Đăng ký ngay
+                </span>
+              </Link>
+            </motion.div>
+          </motion.div>
+          
+          <motion.div 
+            className={styles.scrollIndicator}
+            variants={scrollIndicatorVariants}
+            initial="initial"
+            animate="animate"
+          >
+            <ChevronDown className="h-10 w-10 text-gray-500" />
+          </motion.div>
+        </motion.div>
+      </section>
 
-          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {categories.map((category) => {
+      {/* Categories Section with Hover Effects */}
+      <section className={styles.categoriesSection}>
+        <div className={styles.sectionContainer}>
+          <motion.div
+            className={styles.sectionHeader}
+            variants={fadeInUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <h2 className={styles.sectionTitle}>Danh mục sản phẩm</h2>
+            <div className={styles.sectionDivider}></div>
+            <p className={styles.sectionDescription}>Khám phá các danh mục sản phẩm đa dạng của chúng tôi</p>
+          </motion.div>
+
+          <div className={styles.categoriesGrid}>
+            {categories.map((category, index) => {
               const Icon = category.icon;
               return (
-                <div
-                  key={category.name}
-                  className="relative rounded-lg border border-gray-300 bg-white p-6 shadow-sm hover:shadow-md transition-shadow duration-200"
+                <Link 
+                  key={category.name} 
+                  to={`/products?category=${encodeURIComponent(category.name)}`}
+                  className="block"
                 >
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-blue-100 text-blue-600">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div className="mt-4">
-                    <h3 className="text-lg font-medium text-gray-900">{category.name}</h3>
-                    <p className="mt-2 text-sm text-gray-500">{category.description}</p>
-                  </div>
-                  <div className="absolute bottom-6 right-6">
-                    <Link
-                      to={`/products?category=${encodeURIComponent(category.name)}`}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                  <motion.div
+                    className={styles.categoryCard}
+                    variants={{
+                      ...fadeInUpVariants,
+                      hover: cardHoverVariants.hover
+                    }}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover="hover"
+                    onHoverStart={() => setActiveCategory(index)}
+                    onHoverEnd={() => setActiveCategory(null)}
+                  >
+                    <motion.div 
+                      className={styles.categoryIcon}
+                      variants={iconHoverVariants}
+                      animate={activeCategory === index ? "hover" : "initial"}
                     >
-                      Xem thêm →
-                    </Link>
-                  </div>
-                </div>
+                      <Icon className="h-8 w-8" />
+                    </motion.div>
+                    <div className={styles.categoryContent}>
+                      <h3 className={styles.categoryTitle}>{category.name}</h3>
+                      <p className={styles.categoryDescription}>{category.description}</p>
+                    </div>
+                    <motion.div 
+                      className={styles.categoryLink}
+                      variants={linkHoverVariants}
+                      animate={activeCategory === index ? "hover" : "initial"}
+                    >
+                      <span>Xem thêm</span>
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </motion.div>
+                  </motion.div>
+                </Link>
               );
             })}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
