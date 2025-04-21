@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Star, Search, Filter, ShoppingCart } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { products } from '@/lib/data';
 import { Product, FilterOptions } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/lib/cart-context';
+
+// Import animations
+import { fadeInUpVariants, buttonVariants, cardHoverVariants } from '@/animations/variants';
+
+// Import styles
+import styles from '@/styles/products.module.css';
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -140,46 +147,74 @@ export default function ProductsPage() {
     return acc;
   }, {} as Record<string, number>);
 
+  // Animation variants for staggered products
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+    <div className={styles.pageContainer}>
+      <motion.div 
+        className={styles.container}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div 
+          className={styles.header}
+          variants={fadeInUpVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <h1 className={styles.title}>
             {filters.category ? `Sản phẩm: ${filters.category}` : 'Tất cả sản phẩm'}
           </h1>
-          <p className="mt-2 text-gray-600 max-w-4xl">
+          <p className={styles.subtitle}>
             Khám phá bộ sưu tập văn phòng phẩm đa dạng và hiện đại. Từ bút viết cao cấp đến các dụng cụ học tập sáng tạo.
           </p>
-        </div>
+        </motion.div>
 
         {/* Search and filter bar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
+        <motion.div 
+          className={styles.searchFilterBar}
+          variants={fadeInUpVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.1 }}
+        >
+          <div className={styles.searchInputWrapper}>
+            <Search className={styles.searchIcon} />
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className={styles.searchInput}
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
-          <div className="flex gap-2">
-            <button
+          <div className={styles.filterButtonsWrapper}>
+            <motion.button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className={styles.filterButton}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className={styles.filterIcon} />
               Bộ lọc
-            </button>
+            </motion.button>
 
-            <select
+            <motion.select
               value={filters.sortBy || ''}
               onChange={(e) => handleFilterChange('sortBy', e.target.value || undefined)}
-              className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className={styles.selectInput}
+              whileHover={{ scale: 1.03 }}
             >
               <option value="">Sắp xếp</option>
               {sortOptions.map(option => (
@@ -187,146 +222,187 @@ export default function ProductsPage() {
                   {option.label}
                 </option>
               ))}
-            </select>
+            </motion.select>
           </div>
-        </div>
+        </motion.div>
 
         {/* Filter panel */}
-        {isFilterOpen && (
-          <div className="bg-white p-4 rounded-md shadow-md mb-6 border border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Danh mục</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <input
-                      id="category-all"
-                      name="category"
-                      type="radio"
-                      checked={!filters.category}
-                      onChange={() => handleFilterChange('category', undefined)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <label htmlFor="category-all" className="ml-2 text-sm text-gray-700">
-                      Tất cả ({products.length})
-                    </label>
-                  </div>
-                  
-                  {categories.map(category => (
-                    <div key={category} className="flex items-center">
+        <AnimatePresence>
+          {isFilterOpen && (
+            <motion.div 
+              className={styles.filterPanel}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className={styles.filterGrid}>
+                <div>
+                  <h3 className={styles.filterSectionTitle}>Danh mục</h3>
+                  <div className={styles.filterOptionsList}>
+                    <div className={styles.filterOption}>
                       <input
-                        id={`category-${category}`}
+                        id="category-all"
                         name="category"
                         type="radio"
-                        checked={filters.category === category}
-                        onChange={() => handleFilterChange('category', category)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        checked={!filters.category}
+                        onChange={() => handleFilterChange('category', undefined)}
+                        className={styles.filterRadio}
                       />
-                      <label htmlFor={`category-${category}`} className="ml-2 text-sm text-gray-700">
-                        {category} ({categoryCount[category]})
+                      <label htmlFor="category-all" className={styles.filterLabel}>
+                        Tất cả ({products.length})
                       </label>
                     </div>
-                  ))}
+                    
+                    {categories.map(category => (
+                      <div key={category} className={styles.filterOption}>
+                        <input
+                          id={`category-${category}`}
+                          name="category"
+                          type="radio"
+                          checked={filters.category === category}
+                          onChange={() => handleFilterChange('category', category)}
+                          className={styles.filterRadio}
+                        />
+                        <label htmlFor={`category-${category}`} className={styles.filterLabel}>
+                          {category} ({categoryCount[category]})
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className={styles.filterSectionTitle}>Giá</h3>
+                  <div className={styles.filterOptionsList}>
+                    {priceRanges.map((range, index) => (
+                      <div key={index} className={styles.filterOption}>
+                        <input
+                          id={`price-${index}`}
+                          name="price"
+                          type="radio"
+                          checked={filters.minPrice === range.min && filters.maxPrice === range.max}
+                          onChange={() => {
+                            handleFilterChange('minPrice', range.min);
+                            handleFilterChange('maxPrice', range.max);
+                          }}
+                          className={styles.filterRadio}
+                        />
+                        <label htmlFor={`price-${index}`} className={styles.filterLabel}>
+                          {range.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Giá</h3>
-                <div className="space-y-2">
-                  {priceRanges.map((range, index) => (
-                    <div key={index} className="flex items-center">
-                      <input
-                        id={`price-${index}`}
-                        name="price"
-                        type="radio"
-                        checked={filters.minPrice === range.min && filters.maxPrice === range.max}
-                        onChange={() => {
-                          handleFilterChange('minPrice', range.min);
-                          handleFilterChange('maxPrice', range.max);
-                        }}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                      />
-                      <label htmlFor={`price-${index}`} className="ml-2 text-sm text-gray-700">
-                        {range.label}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Product grid */}
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map(product => (
-              <Link
-                to={`/products/${product.id}`}
-                key={product.id}
-                className="group bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
-              >
-                <div className="aspect-w-3 aspect-h-2 w-full overflow-hidden bg-gray-100">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="w-full h-48 object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-in-out"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-medium text-gray-900 truncate group-hover:text-blue-600">
-                    {product.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                    {product.description}
-                  </p>
-                  <div className="mt-2 flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={cn("h-4 w-4", 
-                          i < Math.floor(product.rating) 
-                            ? "text-yellow-400 fill-current" 
-                            : "text-gray-300"
-                        )}
-                      />
-                    ))}
-                    <span className="ml-1 text-sm text-gray-500">
-                      ({product.reviews})
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-lg font-bold text-gray-900">
-                      {formatPrice(product.price)}
-                    </span>
-                    <button
-                      onClick={(e) => handleAddToCart(product, e)}
-                      className="inline-flex items-center p-2 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <ShoppingCart className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="py-12 text-center">
-            <p className="text-lg text-gray-600">
-              Không tìm thấy sản phẩm phù hợp. Vui lòng thử lại với các bộ lọc khác.
-            </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setFilters({});
-              }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        <AnimatePresence>
+          {filteredProducts.length > 0 ? (
+            <motion.div 
+              className={styles.productGrid}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
             >
-              Xóa bộ lọc
-            </button>
-          </div>
-        )}
-      </div>
+              {filteredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  variants={fadeInUpVariants}
+                  transition={{ 
+                    delay: index * 0.05,
+                    y: { 
+                      duration: 0.15,
+                      ease: "easeOut"
+                    }
+                  }}
+                  whileHover={{ y: -8 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={styles.productCard}
+                >
+                  <Link
+                    to={`/products/${product.id}`}
+                    className="block h-full"
+                  >
+                    <div className={styles.productImageWrapper}>
+                      <motion.img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className={styles.productImage}
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.15 }}
+                      />
+                    </div>
+                    <div className={styles.productContent}>
+                      <h3 className={styles.productTitle}>
+                        {product.name}
+                      </h3>
+                      <p className={styles.productDescription}>
+                        {product.description}
+                      </p>
+                      <div className={styles.ratingWrapper}>
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              styles.star,
+                              i < Math.floor(product.rating) 
+                                ? styles.starFilled
+                                : styles.starEmpty
+                            )}
+                          />
+                        ))}
+                        <span className={styles.reviewCount}>
+                          ({product.reviews})
+                        </span>
+                      </div>
+                      <div className={styles.productFooter}>
+                        <span className={styles.productPrice}>
+                          {formatPrice(product.price)}
+                        </span>
+                        <motion.button
+                          onClick={(e) => handleAddToCart(product, e)}
+                          className={styles.addToCartButton}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          <ShoppingCart className="h-5 w-5" />
+                        </motion.button>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div 
+              className={styles.emptyState}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <p className={styles.emptyStateText}>
+                Không tìm thấy sản phẩm phù hợp. Vui lòng thử lại với các bộ lọc khác.
+              </p>
+              <motion.button
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilters({});
+                }}
+                className={styles.resetFiltersButton}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Xóa bộ lọc
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 } 

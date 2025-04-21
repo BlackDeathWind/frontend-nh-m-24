@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Star, Minus, Plus, ShoppingCart, Heart, Share2, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { products } from '@/lib/data';
 import { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/lib/cart-context';
+
+// Import styles
+import styles from '@/styles/product-detail.module.css';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +17,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'specifications'>('description');
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { addItem } = useCart();
 
   // Lấy sản phẩm theo id
@@ -20,26 +25,34 @@ export default function ProductDetailPage() {
     const foundProduct = products.find(p => p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
+      setSelectedImage(foundProduct.imageUrl);
     }
   }, [id]);
 
   if (!product) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 pt-24">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-900">Không tìm thấy sản phẩm</h2>
-          <p className="mt-2 text-gray-600">
+      <motion.div 
+        className={styles.errorContainer}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className={styles.errorContent}>
+          <h2 className={styles.errorTitle}>Không tìm thấy sản phẩm</h2>
+          <p className={styles.errorMessage}>
             Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
           </p>
-          <button
+          <motion.button
             onClick={() => navigate('/products')}
-            className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className={styles.errorButton}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Quay lại danh sách sản phẩm
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -69,253 +82,371 @@ export default function ProductDetailPage() {
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
+  // Animation variants
+  const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const slideUp = {
+    hidden: { y: 30, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen pb-16 pt-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center mb-8">
+    <div className={styles.pageContainer}>
+      <div className={styles.container}>
+        <motion.div 
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <Link
             to="/products"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500 flex items-center"
+            className={styles.backLink}
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft className={styles.backIcon} />
             Quay lại danh sách sản phẩm
           </Link>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+        <motion.div 
+          className={styles.productCard}
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+        >
+          <div className={styles.productGrid}>
             {/* Ảnh sản phẩm */}
-            <div className="p-6 md:p-8 flex items-center justify-center bg-gray-50">
-              <div className="w-full max-w-md">
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-auto rounded-md shadow-sm object-cover object-center"
-                />
-              </div>
-            </div>
+            <motion.div 
+              className={styles.imageContainer}
+              variants={fadeIn}
+            >
+              <motion.img
+                src={selectedImage || product.imageUrl}
+                alt={product.name}
+                className={styles.productImage}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+              />
+            </motion.div>
 
             {/* Thông tin sản phẩm */}
-            <div className="p-6 md:p-8 flex flex-col">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
+            <motion.div 
+              className={styles.productInfo}
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.h1 
+                className={styles.productTitle}
+                variants={slideUp}
+              >
+                {product.name}
+              </motion.h1>
               
-              <div className="mt-3 flex items-center">
-                <div className="flex items-center">
+              <motion.div 
+                className={styles.ratingContainer}
+                variants={slideUp}
+              >
+                <div className={styles.starContainer}>
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={cn("h-5 w-5", 
+                      className={cn(
+                        styles.star, 
                         i < Math.floor(product.rating) 
-                          ? "text-yellow-400 fill-current" 
-                          : "text-gray-300"
+                          ? styles.starFilled
+                          : styles.starEmpty
                       )}
                     />
                   ))}
                 </div>
-                <p className="ml-2 text-sm text-gray-600">{product.reviews} đánh giá</p>
-              </div>
+                <p className={styles.reviewCount}>{product.reviews} đánh giá</p>
+              </motion.div>
 
-              <div className="mt-5">
-                <p className="text-3xl font-bold text-gray-900">{formatPrice(product.price)}</p>
-                <p className="mt-1 text-sm text-gray-500">Đã bao gồm thuế & phí</p>
-              </div>
+              <motion.div 
+                className={styles.priceContainer}
+                variants={slideUp}
+              >
+                <p className={styles.price}>{formatPrice(product.price)}</p>
+                <p className={styles.taxInfo}>Đã bao gồm thuế & phí</p>
+              </motion.div>
 
-              <div className="mt-6 border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900">Mô tả ngắn</h3>
-                <p className="mt-2 text-base text-gray-600">{product.description}</p>
-              </div>
+              <motion.div 
+                className={styles.shortDescription}
+                variants={slideUp}
+              >
+                <h3 className={styles.sectionTitle}>Mô tả ngắn</h3>
+                <p className={styles.sectionText}>{product.description}</p>
+              </motion.div>
 
-              <div className="mt-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900">Số lượng</h3>
-                  <p className="text-sm text-gray-500">{product.stock} sản phẩm có sẵn</p>
+              <motion.div 
+                className={styles.quantityContainer}
+                variants={slideUp}
+              >
+                <div className={styles.quantityHeader}>
+                  <h3 className={styles.sectionTitle}>Số lượng</h3>
+                  <p className={styles.stockInfo}>{product.stock} sản phẩm có sẵn</p>
                 </div>
-                <div className="mt-2 flex items-center">
-                  <button
+                <div className={styles.quantityControls}>
+                  <motion.button
                     type="button"
-                    className="p-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className={styles.quantityButton}
                     onClick={() => handleQuantityChange(-1)}
                     disabled={quantity <= 1}
+                    whileHover={{ backgroundColor: "#f9fafb" }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <Minus className="h-4 w-4" />
-                  </button>
+                  </motion.button>
                   <input
                     type="number"
-                    className="mx-2 w-16 text-center border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className={styles.quantityInput}
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, parseInt(e.target.value) || 1)))}
                     min="1"
                     max={product.stock}
                   />
-                  <button
+                  <motion.button
                     type="button"
-                    className="p-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className={styles.quantityButton}
                     onClick={() => handleQuantityChange(1)}
                     disabled={quantity >= product.stock}
+                    whileHover={{ backgroundColor: "#f9fafb" }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <Plus className="h-4 w-4" />
-                  </button>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                <button
+              <motion.div 
+                className={styles.actionButtons}
+                variants={slideUp}
+              >
+                <motion.button
                   type="button"
                   onClick={handleAddToCart}
                   className={cn(
-                    "flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all",
-                    isAddedToCart ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
+                    styles.primaryButton,
+                    isAddedToCart && styles.success
                   )}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   {isAddedToCart ? (
-                    <>
-                      <Check className="h-5 w-5 mr-2" />
-                      Đã thêm vào giỏ
-                    </>
+                    <AnimatePresence>
+                      <motion.span
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center"
+                      >
+                        <Check className={styles.buttonIcon} />
+                        Đã thêm vào giỏ
+                      </motion.span>
+                    </AnimatePresence>
                   ) : (
-                    <>
-                      <ShoppingCart className="h-5 w-5 mr-2" />
+                    <span className="flex items-center">
+                      <ShoppingCart className={styles.buttonIcon} />
                       Thêm vào giỏ
-                    </>
+                    </span>
                   )}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className={styles.secondaryButton}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <Heart className="h-5 w-5 mr-2" />
+                  <Heart className={styles.buttonIcon} />
                   Yêu thích
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
-                  className="sm:flex-none inline-flex items-center justify-center p-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className={styles.iconButton}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <Share2 className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
+                  <Share2 />
+                </motion.button>
+              </motion.div>
+            </motion.div>
           </div>
 
           {/* Tabs */}
-          <div className="border-t border-gray-200">
-            <div className="flex border-b border-gray-200">
-              <button
+          <div className={styles.tabsContainer}>
+            <div className={styles.tabButtons}>
+              <motion.button
                 className={cn(
-                  "py-4 px-6 text-sm font-medium focus:outline-none",
-                  activeTab === 'description'
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  styles.tabButton,
+                  activeTab === 'description' && styles.active
                 )}
                 onClick={() => setActiveTab('description')}
+                whileHover={{ color: activeTab !== 'description' ? "#374151" : undefined }}
               >
                 Mô tả chi tiết
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 className={cn(
-                  "py-4 px-6 text-sm font-medium focus:outline-none",
-                  activeTab === 'specifications'
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  styles.tabButton,
+                  activeTab === 'specifications' && styles.active
                 )}
                 onClick={() => setActiveTab('specifications')}
+                whileHover={{ color: activeTab !== 'specifications' ? "#374151" : undefined }}
               >
                 Thông số kỹ thuật
-              </button>
+              </motion.button>
             </div>
 
-            <div className="p-6 md:p-8">
-              {activeTab === 'description' ? (
-                <div className="prose max-w-none">
-                  <p className="text-gray-600">{product.description}</p>
-                  <p className="text-gray-600 mt-4">
-                    Sản phẩm {product.name} thuộc danh mục {product.category}, là một sự lựa chọn tuyệt vời cho những ai đang tìm kiếm sản phẩm chất lượng cao với giá cả hợp lý. Sản phẩm được sản xuất với chất lượng cao nhất, đảm bảo độ bền và hiệu suất sử dụng lâu dài.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-3">Đặc điểm nổi bật</h3>
-                    <ul className="mt-4 space-y-3">
-                      {product.features?.map((feature, index) => (
-                        <li key={index} className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-gray-600">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-3">Thông tin sản phẩm</h3>
-                    <div className="bg-gray-50 rounded-md p-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex justify-between border-b border-gray-200 py-2">
-                          <span className="text-gray-500">Danh mục</span>
-                          <span className="text-gray-900 font-medium">{product.category}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-gray-200 py-2">
-                          <span className="text-gray-500">Trạng thái</span>
-                          <span className="text-green-600 font-medium">Còn hàng</span>
-                        </div>
-                        <div className="flex justify-between border-b border-gray-200 py-2">
-                          <span className="text-gray-500">Đánh giá</span>
-                          <span className="text-gray-900 font-medium">{product.rating}/5 ({product.reviews} đánh giá)</span>
-                        </div>
-                        <div className="flex justify-between border-b border-gray-200 py-2">
-                          <span className="text-gray-500">Số lượng còn</span>
-                          <span className="text-gray-900 font-medium">{product.stock}</span>
+            <div className={styles.tabContent}>
+              <AnimatePresence mode="wait">
+                {activeTab === 'description' ? (
+                  <motion.div
+                    key="description"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className={styles.sectionText}>{product.description}</p>
+                    <p className={styles.sectionText + " mt-4"}>
+                      Sản phẩm {product.name} thuộc danh mục {product.category}, là một sự lựa chọn tuyệt vời cho những ai đang tìm kiếm sản phẩm chất lượng cao với giá cả hợp lý. Sản phẩm được sản xuất với chất lượng cao nhất, đảm bảo độ bền và hiệu suất sử dụng lâu dài.
+                    </p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="specifications"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div>
+                      <h3 className={styles.sectionTitle}>Đặc điểm nổi bật</h3>
+                      <ul className={styles.featureList}>
+                        {product.features?.map((feature, index) => (
+                          <motion.li 
+                            key={index} 
+                            className={styles.featureItem}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            <Check className={styles.featureIcon} />
+                            <span className={styles.sectionText}>{feature}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className={styles.specificationContainer}>
+                      <h3 className={styles.sectionTitle}>Thông tin sản phẩm</h3>
+                      <div className={styles.specificationTable}>
+                        <div className={styles.specGrid}>
+                          <div className={styles.specRow}>
+                            <span className={styles.specLabel}>Danh mục</span>
+                            <span className={styles.specValue}>{product.category}</span>
+                          </div>
+                          <div className={styles.specRow}>
+                            <span className={styles.specLabel}>Trạng thái</span>
+                            <span className={styles.specValueSuccess}>Còn hàng</span>
+                          </div>
+                          <div className={styles.specRow}>
+                            <span className={styles.specLabel}>Đánh giá</span>
+                            <span className={styles.specValue}>{product.rating}/5 ({product.reviews} đánh giá)</span>
+                          </div>
+                          <div className={styles.specRow}>
+                            <span className={styles.specLabel}>Số lượng còn</span>
+                            <span className={styles.specValue}>{product.stock}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Sản phẩm liên quan */}
         {relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Sản phẩm liên quan</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map(relatedProduct => (
-                <Link
-                  to={`/products/${relatedProduct.id}`}
+          <motion.div 
+            className={styles.relatedProductsSection}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className={styles.relatedProductsTitle}>Sản phẩm liên quan</h2>
+            <div className={styles.relatedProductsGrid}>
+              {relatedProducts.map((relatedProduct, index) => (
+                <motion.div
                   key={relatedProduct.id}
-                  className="group bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, duration: 0.3 }}
+                  whileHover={{ y: -8 }}
                 >
-                  <div className="aspect-w-3 aspect-h-2 w-full overflow-hidden bg-gray-100">
-                    <img
-                      src={relatedProduct.imageUrl}
-                      alt={relatedProduct.name}
-                      className="w-full h-48 object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-in-out"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-medium text-gray-900 truncate group-hover:text-blue-600">
-                      {relatedProduct.name}
-                    </h3>
-                    <div className="mt-2 flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={cn("h-4 w-4", 
-                            i < Math.floor(relatedProduct.rating) 
-                              ? "text-yellow-400 fill-current" 
-                              : "text-gray-300"
-                          )}
-                        />
-                      ))}
+                  <Link
+                    to={`/products/${relatedProduct.id}`}
+                    className={styles.relatedProductCard}
+                  >
+                    <div className={styles.relatedProductImageContainer}>
+                      <img
+                        src={relatedProduct.imageUrl}
+                        alt={relatedProduct.name}
+                        className={styles.relatedProductImage}
+                      />
                     </div>
-                    <p className="mt-2 text-lg font-bold text-gray-900">
-                      {formatPrice(relatedProduct.price)}
-                    </p>
-                  </div>
-                </Link>
+                    <div className={styles.relatedProductInfo}>
+                      <h3 className={styles.relatedProductTitle}>
+                        {relatedProduct.name}
+                      </h3>
+                      <div className={styles.relatedProductRating}>
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              styles.star, 
+                              i < Math.floor(relatedProduct.rating) 
+                                ? styles.starFilled 
+                                : styles.starEmpty
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <p className={styles.relatedProductPrice}>
+                        {formatPrice(relatedProduct.price)}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
