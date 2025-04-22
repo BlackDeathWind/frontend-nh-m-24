@@ -1,8 +1,14 @@
 {
   "name": "modern-stationery-store",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "author": {
+    "name": "Phạm Nguyễn Chu Nguyên",
+    "email": "21050043@student.bdu.edu.vn"
+  },
+  "description": "Modern Stationery Store Frontend Application",
+  "license": "ISC",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -23,6 +29,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/node": "^22.14.1",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",

@@ -6,6 +6,7 @@ import './index.css';
 import { CartProvider } from './lib/cart-context';
 import { AuthProvider } from './lib/auth-context';
 import { NotificationProvider } from './lib/notification-context';
+import RoutePreloader from './lib/preload-routes';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -13,6 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <CartProvider>
           <NotificationProvider>
+            <RoutePreloader />
             <App />
           </NotificationProvider>
         </CartProvider>

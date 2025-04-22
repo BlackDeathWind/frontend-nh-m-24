@@ -17,7 +17,10 @@
     "sql-server",
     "rest-api"
   ],
-  "author": "",
+  "author": {
+    "name": "Phạm Nguyễn Chu Nguyên",
+    "email": "21050043@student.bdu.edu.vn"
+  },
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",

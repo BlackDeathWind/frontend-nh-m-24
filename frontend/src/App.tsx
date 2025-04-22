@@ -1,19 +1,23 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Suspense } from 'react';
 import Navbar from './components/layout/navbar';
-import LoginPage from './pages/auth/login';
-import RegisterPage from './pages/auth/register';
-import ProfilePage from './pages/auth/profile';
-import HomePage from './pages/home';
-import ProductsPage from './pages/products';
-import ProductDetailPage from './pages/product-detail';
-import CartPage from './pages/cart';
-import CheckoutPage from './pages/checkout';
-import DashboardLayout from './components/dashboard/DashboardLayout';
-import AdminDashboard from './pages/admin/dashboard';
-import SellerDashboard from './pages/seller/dashboard';
-import ProductsManagement from './pages/admin/products';
 import { ToastContainer } from './components/ui/toast-container';
 import { useAuth } from './lib/auth-context';
+import {
+  FullPageLoadingFallback,
+  LazyLoginPage,
+  LazyRegisterPage,
+  LazyProfilePage,
+  LazyHomePage,
+  LazyProductsPage,
+  LazyProductDetailPage,
+  LazyCartPage,
+  LazyCheckoutPage,
+  LazyDashboardLayout,
+  LazyAdminDashboard,
+  LazySellerDashboard,
+  LazyProductsManagement
+} from './lib/lazy-components';
 
 // Component dùng để chuyển hướng dựa trên vai trò
 function DashboardRedirect() {
@@ -39,35 +43,51 @@ function App() {
           element={
             <>
               <Navbar />
-              <Outlet />
+              <Suspense fallback={<FullPageLoadingFallback />}>
+                <Outlet />
+              </Suspense>
               <ToastContainer />
             </>
           }
         >
-          <Route index element={<HomePage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="products/:id" element={<ProductDetailPage />} />
-          <Route path="cart" element={<CartPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route index element={<LazyHomePage />} />
+          <Route path="products" element={<LazyProductsPage />} />
+          <Route path="products/:id" element={<LazyProductDetailPage />} />
+          <Route path="cart" element={<LazyCartPage />} />
+          <Route path="checkout" element={<LazyCheckoutPage />} />
+          <Route path="login" element={<LazyLoginPage />} />
+          <Route path="register" element={<LazyRegisterPage />} />
+          <Route path="profile" element={<LazyProfilePage />} />
           {/* Route mới để chuyển hướng đến dashboard dựa trên vai trò */}
           <Route path="dashboard" element={<DashboardRedirect />} />
         </Route>
 
         {/* Admin Dashboard Routes - Không hiển thị Navbar */}
-        <Route path="/admin" element={<DashboardLayout requiredRole="admin" />}>
+        <Route 
+          path="/admin" 
+          element={
+            <Suspense fallback={<FullPageLoadingFallback />}>
+              <LazyDashboardLayout requiredRole="admin" />
+            </Suspense>
+          }
+        >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="products" element={<ProductsManagement />} />
+          <Route path="dashboard" element={<LazyAdminDashboard />} />
+          <Route path="products" element={<LazyProductsManagement />} />
           {/* Thêm các routes admin khác ở đây */}
         </Route>
 
         {/* Seller Dashboard Routes - Không hiển thị Navbar */}
-        <Route path="/seller" element={<DashboardLayout requiredRole="seller" />}>
+        <Route 
+          path="/seller" 
+          element={
+            <Suspense fallback={<FullPageLoadingFallback />}>
+              <LazyDashboardLayout requiredRole="seller" />
+            </Suspense>
+          }
+        >
           <Route index element={<Navigate to="/seller/dashboard" replace />} />
-          <Route path="dashboard" element={<SellerDashboard />} />
+          <Route path="dashboard" element={<LazySellerDashboard />} />
           {/* Thêm các routes seller khác ở đây */}
         </Route>
 

@@ -141,13 +141,13 @@ export default function ProductDetailPage() {
             >
               <motion.img
                 src={selectedImage || product.imageUrl}
-                alt={product.name}
+                  alt={product.name}
                 className={styles.productImage}
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5 }}
                 whileHover={{ scale: 1.05 }}
-              />
+                />
             </motion.div>
 
             {/* Thông tin sản phẩm */}
@@ -263,7 +263,7 @@ export default function ProductDetailPage() {
                         className="flex items-center"
                       >
                         <Check className={styles.buttonIcon} />
-                        Đã thêm vào giỏ
+                      Đã thêm vào giỏ
                       </motion.span>
                     </AnimatePresence>
                   ) : (
@@ -321,7 +321,7 @@ export default function ProductDetailPage() {
 
             <div className={styles.tabContent}>
               <AnimatePresence mode="wait">
-                {activeTab === 'description' ? (
+              {activeTab === 'description' ? (
                   <motion.div
                     key="description"
                     initial={{ opacity: 0, y: 20 }}
@@ -331,10 +331,10 @@ export default function ProductDetailPage() {
                   >
                     <p className={styles.sectionText}>{product.description}</p>
                     <p className={styles.sectionText + " mt-4"}>
-                      Sản phẩm {product.name} thuộc danh mục {product.category}, là một sự lựa chọn tuyệt vời cho những ai đang tìm kiếm sản phẩm chất lượng cao với giá cả hợp lý. Sản phẩm được sản xuất với chất lượng cao nhất, đảm bảo độ bền và hiệu suất sử dụng lâu dài.
-                    </p>
+                    Sản phẩm {product.name} thuộc danh mục {product.category}, là một sự lựa chọn tuyệt vời cho những ai đang tìm kiếm sản phẩm chất lượng cao với giá cả hợp lý. Sản phẩm được sản xuất với chất lượng cao nhất, đảm bảo độ bền và hiệu suất sử dụng lâu dài.
+                  </p>
                   </motion.div>
-                ) : (
+              ) : (
                   <motion.div
                     key="specifications"
                     initial={{ opacity: 0, y: 20 }}
@@ -342,10 +342,10 @@ export default function ProductDetailPage() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div>
+                  <div>
                       <h3 className={styles.sectionTitle}>Đặc điểm nổi bật</h3>
                       <ul className={styles.featureList}>
-                        {product.features?.map((feature, index) => (
+                      {product.features?.map((feature, index) => (
                           <motion.li 
                             key={index} 
                             className={styles.featureItem}
@@ -356,10 +356,10 @@ export default function ProductDetailPage() {
                             <Check className={styles.featureIcon} />
                             <span className={styles.sectionText}>{feature}</span>
                           </motion.li>
-                        ))}
-                      </ul>
-                    </div>
-                    
+                      ))}
+                    </ul>
+                  </div>
+                  
                     <div className={styles.specificationContainer}>
                       <h3 className={styles.sectionTitle}>Thông tin sản phẩm</h3>
                       <div className={styles.specificationTable}>
@@ -371,20 +371,20 @@ export default function ProductDetailPage() {
                           <div className={styles.specRow}>
                             <span className={styles.specLabel}>Trạng thái</span>
                             <span className={styles.specValueSuccess}>Còn hàng</span>
-                          </div>
+                        </div>
                           <div className={styles.specRow}>
                             <span className={styles.specLabel}>Đánh giá</span>
                             <span className={styles.specValue}>{product.rating}/5 ({product.reviews} đánh giá)</span>
-                          </div>
+                        </div>
                           <div className={styles.specRow}>
                             <span className={styles.specLabel}>Số lượng còn</span>
                             <span className={styles.specValue}>{product.stock}</span>
-                          </div>
+                        </div>
                         </div>
                       </div>
                     </div>
                   </motion.div>
-                )}
+              )}
               </AnimatePresence>
             </div>
           </div>
@@ -413,36 +413,36 @@ export default function ProductDetailPage() {
                   <Link
                     to={`/products/${relatedProduct.id}`}
                     className={styles.relatedProductCard}
-                  >
+                >
                     <div className={styles.relatedProductImageContainer}>
-                      <img
-                        src={relatedProduct.imageUrl}
-                        alt={relatedProduct.name}
+                    <img
+                      src={relatedProduct.imageUrl}
+                      alt={relatedProduct.name}
                         className={styles.relatedProductImage}
-                      />
-                    </div>
+                    />
+                  </div>
                     <div className={styles.relatedProductInfo}>
                       <h3 className={styles.relatedProductTitle}>
-                        {relatedProduct.name}
-                      </h3>
+                      {relatedProduct.name}
+                    </h3>
                       <div className={styles.relatedProductRating}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
                             className={cn(
                               styles.star, 
-                              i < Math.floor(relatedProduct.rating) 
+                            i < Math.floor(relatedProduct.rating) 
                                 ? styles.starFilled 
                                 : styles.starEmpty
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <p className={styles.relatedProductPrice}>
-                        {formatPrice(relatedProduct.price)}
-                      </p>
+                          )}
+                        />
+                      ))}
                     </div>
-                  </Link>
+                      <p className={styles.relatedProductPrice}>
+                      {formatPrice(relatedProduct.price)}
+                    </p>
+                  </div>
+                </Link>
                 </motion.div>
               ))}
             </div>

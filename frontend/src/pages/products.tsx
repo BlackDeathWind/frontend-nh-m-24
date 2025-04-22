@@ -228,7 +228,7 @@ export default function ProductsPage() {
 
         {/* Filter panel */}
         <AnimatePresence>
-          {isFilterOpen && (
+        {isFilterOpen && (
             <motion.div 
               className={styles.filterPanel}
               initial={{ opacity: 0, height: 0 }}
@@ -237,72 +237,72 @@ export default function ProductsPage() {
               transition={{ duration: 0.3 }}
             >
               <div className={styles.filterGrid}>
-                <div>
+              <div>
                   <h3 className={styles.filterSectionTitle}>Danh mục</h3>
                   <div className={styles.filterOptionsList}>
                     <div className={styles.filterOption}>
+                    <input
+                      id="category-all"
+                      name="category"
+                      type="radio"
+                      checked={!filters.category}
+                      onChange={() => handleFilterChange('category', undefined)}
+                        className={styles.filterRadio}
+                    />
+                      <label htmlFor="category-all" className={styles.filterLabel}>
+                      Tất cả ({products.length})
+                    </label>
+                  </div>
+                  
+                  {categories.map(category => (
+                      <div key={category} className={styles.filterOption}>
                       <input
-                        id="category-all"
+                        id={`category-${category}`}
                         name="category"
                         type="radio"
-                        checked={!filters.category}
-                        onChange={() => handleFilterChange('category', undefined)}
-                        className={styles.filterRadio}
+                        checked={filters.category === category}
+                        onChange={() => handleFilterChange('category', category)}
+                          className={styles.filterRadio}
                       />
-                      <label htmlFor="category-all" className={styles.filterLabel}>
-                        Tất cả ({products.length})
+                        <label htmlFor={`category-${category}`} className={styles.filterLabel}>
+                        {category} ({categoryCount[category]})
                       </label>
                     </div>
-                    
-                    {categories.map(category => (
-                      <div key={category} className={styles.filterOption}>
-                        <input
-                          id={`category-${category}`}
-                          name="category"
-                          type="radio"
-                          checked={filters.category === category}
-                          onChange={() => handleFilterChange('category', category)}
-                          className={styles.filterRadio}
-                        />
-                        <label htmlFor={`category-${category}`} className={styles.filterLabel}>
-                          {category} ({categoryCount[category]})
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className={styles.filterSectionTitle}>Giá</h3>
-                  <div className={styles.filterOptionsList}>
-                    {priceRanges.map((range, index) => (
-                      <div key={index} className={styles.filterOption}>
-                        <input
-                          id={`price-${index}`}
-                          name="price"
-                          type="radio"
-                          checked={filters.minPrice === range.min && filters.maxPrice === range.max}
-                          onChange={() => {
-                            handleFilterChange('minPrice', range.min);
-                            handleFilterChange('maxPrice', range.max);
-                          }}
-                          className={styles.filterRadio}
-                        />
-                        <label htmlFor={`price-${index}`} className={styles.filterLabel}>
-                          {range.label}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
+              
+              <div>
+                  <h3 className={styles.filterSectionTitle}>Giá</h3>
+                  <div className={styles.filterOptionsList}>
+                  {priceRanges.map((range, index) => (
+                      <div key={index} className={styles.filterOption}>
+                      <input
+                        id={`price-${index}`}
+                        name="price"
+                        type="radio"
+                        checked={filters.minPrice === range.min && filters.maxPrice === range.max}
+                        onChange={() => {
+                          handleFilterChange('minPrice', range.min);
+                          handleFilterChange('maxPrice', range.max);
+                        }}
+                          className={styles.filterRadio}
+                      />
+                        <label htmlFor={`price-${index}`} className={styles.filterLabel}>
+                        {range.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
             </motion.div>
-          )}
+        )}
         </AnimatePresence>
 
         {/* Product grid */}
         <AnimatePresence>
-          {filteredProducts.length > 0 ? (
+        {filteredProducts.length > 0 ? (
             <motion.div 
               className={styles.productGrid}
               variants={containerVariants}
@@ -324,57 +324,57 @@ export default function ProductsPage() {
                   whileTap={{ scale: 0.98 }}
                   className={styles.productCard}
                 >
-                  <Link
-                    to={`/products/${product.id}`}
+              <Link
+                to={`/products/${product.id}`}
                     className="block h-full"
-                  >
+              >
                     <div className={styles.productImageWrapper}>
                       <motion.img
-                        src={product.imageUrl}
-                        alt={product.name}
+                    src={product.imageUrl}
+                    alt={product.name}
                         className={styles.productImage}
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.15 }}
-                      />
-                    </div>
+                  />
+                </div>
                     <div className={styles.productContent}>
                       <h3 className={styles.productTitle}>
-                        {product.name}
-                      </h3>
+                    {product.name}
+                  </h3>
                       <p className={styles.productDescription}>
-                        {product.description}
-                      </p>
+                    {product.description}
+                  </p>
                       <div className={styles.ratingWrapper}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
                             className={cn(
                               styles.star,
-                              i < Math.floor(product.rating) 
+                          i < Math.floor(product.rating) 
                                 ? styles.starFilled
                                 : styles.starEmpty
-                            )}
-                          />
-                        ))}
+                        )}
+                      />
+                    ))}
                         <span className={styles.reviewCount}>
-                          ({product.reviews})
-                        </span>
-                      </div>
+                      ({product.reviews})
+                    </span>
+                  </div>
                       <div className={styles.productFooter}>
                         <span className={styles.productPrice}>
-                          {formatPrice(product.price)}
-                        </span>
+                      {formatPrice(product.price)}
+                    </span>
                         <motion.button
-                          onClick={(e) => handleAddToCart(product, e)}
+                      onClick={(e) => handleAddToCart(product, e)}
                           className={styles.addToCartButton}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                        >
-                          <ShoppingCart className="h-5 w-5" />
+                    >
+                      <ShoppingCart className="h-5 w-5" />
                         </motion.button>
-                      </div>
-                    </div>
-                  </Link>
+                  </div>
+                </div>
+              </Link>
                 </motion.div>
               ))}
             </motion.div>
@@ -386,21 +386,21 @@ export default function ProductsPage() {
               transition={{ delay: 0.3 }}
             >
               <p className={styles.emptyStateText}>
-                Không tìm thấy sản phẩm phù hợp. Vui lòng thử lại với các bộ lọc khác.
-              </p>
+              Không tìm thấy sản phẩm phù hợp. Vui lòng thử lại với các bộ lọc khác.
+            </p>
               <motion.button
-                onClick={() => {
-                  setSearchQuery('');
-                  setFilters({});
-                }}
+              onClick={() => {
+                setSearchQuery('');
+                setFilters({});
+              }}
                 className={styles.resetFiltersButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-              >
-                Xóa bộ lọc
+            >
+              Xóa bộ lọc
               </motion.button>
             </motion.div>
-          )}
+        )}
         </AnimatePresence>
       </motion.div>
     </div>
