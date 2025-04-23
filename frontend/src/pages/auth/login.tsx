@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/lib/notification-context';
 import { motion } from 'framer-motion';
-import { fadeInUpVariants, itemVariants, buttonVariants } from '@/animations/variants';
+import { fadeInUpVariants, itemVariants } from '@/animations/variants';
 
 interface LoginForm {
   email: string;

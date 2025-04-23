@@ -113,6 +113,50 @@ export const productAPI = {
       throw error;
     }
   },
+
+  // Thêm API để lấy mock data từ backend
+  getMockProducts: async () => {
+    try {
+      const response = await api.get('/mock/products');
+      return response.data;
+    } catch (error) {
+      console.error('Get mock products error:', error);
+      throw error;
+    }
+  },
+
+  getMockAdminProducts: async () => {
+    try {
+      const response = await api.get('/mock/admin-products');
+      return response.data;
+    } catch (error) {
+      console.error('Get mock admin products error:', error);
+      throw error;
+    }
+  }
+};
+
+// API Dashboard (sử dụng mock data từ backend)
+export const dashboardAPI = {
+  getMockDashboardData: async () => {
+    try {
+      const response = await api.get('/mock/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Get mock dashboard data error:', error);
+      throw error;
+    }
+  },
+
+  getMockSellerDashboardData: async () => {
+    try {
+      const response = await api.get('/mock/seller-dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Get mock seller dashboard data error:', error);
+      throw error;
+    }
+  }
 };
 
 // API Giỏ hàng (khi backend triển khai API này)
@@ -208,6 +252,17 @@ export const orderAPI = {
       throw error;
     }
   },
+
+  // Thêm API để lấy mock order data từ backend
+  getMockOrders: async () => {
+    try {
+      const response = await api.get('/mock/orders');
+      return response.data;
+    } catch (error) {
+      console.error('Get mock orders error:', error);
+      throw error;
+    }
+  }
 };
 
 // API Thanh toán

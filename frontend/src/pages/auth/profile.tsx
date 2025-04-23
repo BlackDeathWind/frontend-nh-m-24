@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   containerVariants, 
   itemVariants, 
-  buttonVariants, 
   fadeInUpVariants,
   cardHoverVariants 
 } from '../../animations/variants';
