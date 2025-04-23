@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from '../utils/responseHandler';
 import { isValidEmail, isValidPassword } from '../utils/validator';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../utils/logger';
+import { mockAdminUser, mockSellerUser, mockTokens } from '../mocks';
 
 // Mở rộng interface SessionData
 declare module 'express-session' {
@@ -12,28 +13,6 @@ declare module 'express-session' {
     userRole?: string;
   }
 }
-
-// User giả cho chế độ phát triển khi không có DB
-const mockUser = {
-  id: 'mock-user-id-123',
-  email: 'admin@example.com',
-  fullName: 'Admin User',
-  role: 'admin',
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date()
-};
-
-// Seller giả cho chế độ phát triển
-const mockSeller = {
-  id: 'mock-seller-id-456',
-  email: 'seller@example.com',
-  fullName: 'Seller Account',
-  role: 'seller',
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date()
-};
 
 // Hàm kiểm tra xem có đang bỏ qua DB hay không
 const isSkipDB = () => process.env.SKIP_DB === 'true' && process.env.NODE_ENV === 'development';
@@ -61,7 +40,7 @@ const AuthController = {
 
       // Nếu đang bỏ qua DB, trả về user giả
       if (isSkipDB()) {
-        return successResponse(res, mockUser, 'Đăng ký tài khoản thành công (chế độ giả lập).', 201);
+        return successResponse(res, mockAdminUser, 'Đăng ký tài khoản thành công (chế độ giả lập).', 201);
       }
 
       // Đăng ký người dùng thật với DB
@@ -93,17 +72,15 @@ const AuthController = {
       if (isSkipDB()) {
         // Kiểm tra đăng nhập đơn giản cho môi trường phát triển
         if (email === 'admin@example.com' && password === 'Admin123!') {
-          const mockToken = 'mock-jwt-token-for-development';
-          
           // Lưu thông tin vào session nếu session tồn tại
           if (req.session && process.env.SKIP_REDIS !== 'true') {
-            req.session.userId = mockUser.id;
-            req.session.userRole = mockUser.role;
+            req.session.userId = mockAdminUser.id;
+            req.session.userRole = mockAdminUser.role;
           }
 
           // Đặt cookie JWT nếu cần
           if (process.env.SKIP_REDIS !== 'true') {
-            res.cookie('jwt', mockToken, {
+            res.cookie('jwt', mockTokens.adminToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production',
               maxAge: 24 * 60 * 60 * 1000, // 1 ngày
@@ -112,21 +89,19 @@ const AuthController = {
 
           return successResponse(
             res, 
-            { user: mockUser, token: mockToken }, 
+            { user: mockAdminUser, token: mockTokens.adminToken }, 
             'Đăng nhập thành công (chế độ giả lập).'
           );
         } else if (email === 'seller@example.com' && password === 'Seller123!') {
-          const mockToken = 'mock-jwt-token-for-seller';
-          
           // Lưu thông tin vào session nếu session tồn tại
           if (req.session && process.env.SKIP_REDIS !== 'true') {
-            req.session.userId = mockSeller.id;
-            req.session.userRole = mockSeller.role;
+            req.session.userId = mockSellerUser.id;
+            req.session.userRole = mockSellerUser.role;
           }
 
           // Đặt cookie JWT nếu cần
           if (process.env.SKIP_REDIS !== 'true') {
-            res.cookie('jwt', mockToken, {
+            res.cookie('jwt', mockTokens.sellerToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production',
               maxAge: 24 * 60 * 60 * 1000, // 1 ngày
@@ -135,7 +110,7 @@ const AuthController = {
 
           return successResponse(
             res, 
-            { user: mockSeller, token: mockToken }, 
+            { user: mockSellerUser, token: mockTokens.sellerToken }, 
             'Đăng nhập thành công (chế độ giả lập).'
           );
         } else {
@@ -216,14 +191,14 @@ const AuthController = {
         if (req.user && req.user.role === 'seller') {
           return successResponse(
             res, 
-            mockSeller, 
+            mockSellerUser, 
             'Lấy thông tin người dùng thành công (chế độ giả lập).'
           );
         }
         
         return successResponse(
           res, 
-          mockUser, 
+          mockAdminUser, 
           'Lấy thông tin người dùng thành công (chế độ giả lập).'
         );
       }
@@ -253,7 +228,7 @@ const AuthController = {
       // Nếu đang bỏ qua DB, trả về user giả đã cập nhật
       if (isSkipDB()) {
         // Xác định user cần cập nhật dựa trên role
-        const baseUser = req.user && req.user.role === 'seller' ? mockSeller : mockUser;
+        const baseUser = req.user && req.user.role === 'seller' ? mockSellerUser : mockAdminUser;
         
         // Cập nhật thông tin user
         const updatedUser = { 

@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { ShoppingBag, Package, TrendingUp, AlertTriangle, Clock, DollarSign, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  sellerRevenueData,
+  sellerProducts,
+  sellerOrders,
+  sellerLowStockProducts,
+  sellerStats
+} from '@/mocks/seller-dashboard';
 
 // Giả lập dữ liệu doanh thu
 const revenueData = [
@@ -38,6 +45,8 @@ const lowStockProducts = [
   { id: 3, name: 'Kẹp giấy màu', current: 7, min: 20 },
 ];
 
+// Sử dụng dữ liệu từ mocks/seller-dashboard.ts
+
 export default function SellerDashboard() {
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('week');
   
@@ -49,43 +58,12 @@ export default function SellerDashboard() {
     }).format(amount);
   };
 
-  const stats = [
-    {
-      title: 'Doanh thu tuần này',
-      value: formatCurrency(1470000),
-      icon: <DollarSign size={24} />,
-      growth: 8.2,
-      color: 'blue',
-    },
-    {
-      title: 'Đơn hàng',
-      value: '37',
-      icon: <ShoppingBag size={24} />,
-      growth: 12.5,
-      color: 'green',
-    },
-    {
-      title: 'Sản phẩm đã bán',
-      value: '104',
-      icon: <Package size={24} />,
-      growth: 5.7,
-      color: 'purple',
-    },
-    {
-      title: 'Tỷ lệ hoàn thành',
-      value: '98%',
-      icon: <TrendingUp size={24} />,
-      growth: 3.1,
-      color: 'orange',
-    },
-  ];
-
   // Đếm số đơn hàng theo trạng thái
   const orderStatusCount = {
-    pending: myOrders.filter(order => order.status === 'pending').length,
-    processing: myOrders.filter(order => order.status === 'processing').length,
-    completed: myOrders.filter(order => order.status === 'completed').length,
-    cancelled: myOrders.filter(order => order.status === 'cancelled').length,
+    pending: sellerOrders.filter(order => order.status === 'pending').length,
+    processing: sellerOrders.filter(order => order.status === 'processing').length,
+    completed: sellerOrders.filter(order => order.status === 'completed').length,
+    cancelled: sellerOrders.filter(order => order.status === 'cancelled').length,
   };
 
   return (
@@ -131,7 +109,7 @@ export default function SellerDashboard() {
 
       {/* Thống kê tổng quan */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {sellerStats.map((stat, index) => (
           <div key={index} className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -139,7 +117,7 @@ export default function SellerDashboard() {
                 <p className="text-2xl font-bold mt-1">{stat.value}</p>
               </div>
               <div className={`p-3 rounded-full bg-${stat.color}-100 text-${stat.color}-600`}>
-                {stat.icon}
+                {stat.icon ? stat.icon : <TrendingUp size={24} />}
               </div>
             </div>
             <div className="mt-4 flex items-center">
@@ -167,7 +145,7 @@ export default function SellerDashboard() {
           {/* Biểu đồ doanh thu */}
           <div className="h-64 w-full">
             <div className="flex items-end justify-between h-52 w-full">
-              {revenueData.map((item, index) => (
+              {sellerRevenueData.map((item, index) => (
                 <div key={index} className="flex flex-col items-center w-full">
                   <div 
                     className="bg-blue-500 rounded-t-sm w-12"
