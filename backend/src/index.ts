@@ -13,6 +13,7 @@ import { testConnection } from './config/database';
 import { connectRedis } from './config/redis';
 import { initSocketServer } from './config/websocket';
 import corsMiddleware from './middlewares/cors';
+import config from './config/config';
 
 // Đảm bảo biến môi trường được load
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -321,19 +322,34 @@ const startServer = async () => {
     }
     
     // Kiểm tra kết nối đến cơ sở dữ liệu nếu không bỏ qua
+    let dbConnected = false;
     if (process.env.NODE_ENV !== 'development' || process.env.SKIP_DB !== 'true') {
       try {
-        await testConnection();
+        dbConnected = await testConnection();
+        if (dbConnected) {
+          logger.info('Sử dụng cơ sở dữ liệu SQL Server thật');
+        } else {
+          logger.warn('Không thể kết nối đến cơ sở dữ liệu, tiếp tục khởi động server với mock data');
+          // Đặt SKIP_DB về true để sử dụng mock data
+          process.env.SKIP_DB = 'true';
+        }
       } catch (error) {
-        logger.warn('Không thể kết nối đến cơ sở dữ liệu, tiếp tục khởi động server');
+        logger.warn('Lỗi khi kết nối đến cơ sở dữ liệu, tiếp tục khởi động server với mock data');
+        // Đặt SKIP_DB về true để sử dụng mock data
+        process.env.SKIP_DB = 'true';
       }
     } else {
-      logger.info('Đang chạy ở chế độ phát triển mà không kết nối đến cơ sở dữ liệu');
+      logger.info('Đang chạy ở chế độ phát triển mà không kết nối đến cơ sở dữ liệu (sử dụng mock data)');
     }
     
     // Khởi động server
     server.listen(PORT, () => {
       logger.info(`Server đang chạy trên cổng ${PORT} trong môi trường ${process.env.NODE_ENV || 'development'}`);
+      if (dbConnected) {
+        logger.info(`Sử dụng cơ sở dữ liệu SQL Server thật: ${config.DB.HOST}/${config.DB.NAME}`);
+      } else {
+        logger.info('Sử dụng dữ liệu giả lập (mock data)');
+      }
     });
   } catch (error) {
     logger.error(`Không thể khởi động server: ${error}`);

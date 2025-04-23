@@ -1,8 +1,8 @@
 -- Tạo cơ sở dữ liệu
-CREATE DATABASE ecommerce;
+CREATE DATABASE web;
 GO
 
-USE ecommerce;
+USE web;
 GO
 
 -- Tạo bảng người dùng

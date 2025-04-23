@@ -9,7 +9,7 @@ export interface IOrder {
   paymentStatus: 'pending' | 'paid' | 'failed';
   createdAt: Date;
   updatedAt: Date;
-  items: IOrderItem[];
+  orderItems?: IOrderItem[];
 }
 
 export interface IOrderItem {
