@@ -1,31 +1,23 @@
-export interface ICategory {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image?: string;
-  isActive: boolean;
-  parentId?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+// Interface cho đối tượng Danh mục
+export interface IDanhMuc {
+  MaDanhMuc: number;
+  TenDanhMuc: string;
+  MoTa?: string;
+  HinhAnh?: string;
+  NgayTao: Date;
+  NgayCapNhat: Date;
 }
 
-export interface ICategoryCreate {
-  name: string;
-  description?: string;
-  image?: string;
-  isActive?: boolean;
-  parentId?: string | null;
+// Interface dùng để tạo Danh mục mới
+export interface IDanhMucCreate {
+  TenDanhMuc: string;
+  MoTa?: string;
+  HinhAnh?: string;
 }
 
-export interface ICategoryUpdate {
-  name?: string;
-  description?: string;
-  image?: string;
-  isActive?: boolean;
-  parentId?: string | null;
+// Interface dùng để cập nhật Danh mục
+export interface IDanhMucUpdate {
+  TenDanhMuc?: string;
+  MoTa?: string;
+  HinhAnh?: string;
 }
-
-export interface ICategoryWithSubcategories extends ICategory {
-  subcategories?: ICategory[];
-} 

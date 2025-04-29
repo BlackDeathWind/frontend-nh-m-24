@@ -1,35 +1,55 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { User } from '../models';
-import { IUserCreate, IUserLogin, IUserUpdate } from '../interfaces/user.interface';
+import { KhachHang, NhanVien } from '../models';
 import { AppError } from '../middlewares/errorHandler';
 import config from '../config/config';
 import { redisClient } from '../config/redis';
 import logger from '../utils/logger';
 import { SignOptions } from 'jsonwebtoken';
 
+interface IUserCreate {
+  HoTen: string;
+  Email: string;
+  MatKhau: string;
+  SoDienThoai?: string;
+  MaVaiTro?: number;
+}
+
+interface IUserLogin {
+  Email: string;
+  MatKhau: string;
+  isAdmin?: boolean;
+}
+
+interface IUserUpdate {
+  HoTen?: string;
+  SoDienThoai?: string;
+}
+
 class AuthService {
   /**
-   * Đăng ký người dùng mới
+   * Đăng ký khách hàng mới
    */
   async register(userData: IUserCreate) {
     try {
       // Kiểm tra xem email đã tồn tại chưa
-      const existingUser = await User.findOne({ where: { email: userData.email } });
+      const existingUser = await KhachHang.findOne({ where: { Email: userData.Email } });
       if (existingUser) {
         throw new AppError('Email đã được sử dụng. Vui lòng chọn email khác.', 400);
       }
 
       // Tạo người dùng mới
-      const newUser = await User.create({
+      const newUser = await KhachHang.create({
         ...userData,
-        role: userData.role || 'user',
+        MaVaiTro: userData.MaVaiTro || 1, // Vai trò mặc định là khách hàng
+        NgayDangKy: new Date(),
+        TrangThai: true
       });
 
       // Không trả về mật khẩu
       const userWithoutPassword = { ...newUser.toJSON() };
-      if ('password' in userWithoutPassword) {
-        delete (userWithoutPassword as any).password;
+      if ('MatKhau' in userWithoutPassword) {
+        delete (userWithoutPassword as any).MatKhau;
       }
 
       return userWithoutPassword;
@@ -41,37 +61,60 @@ class AuthService {
   }
 
   /**
-   * Đăng nhập người dùng
+   * Đăng nhập người dùng/quản trị
    */
   async login(credentials: IUserLogin) {
     try {
-      // Tìm người dùng
-      const user = await User.findOne({ where: { email: credentials.email } });
+      let user: KhachHang | NhanVien | null = null;
+      let role: string;
+      let userId: string = '';
+
+      // Kiểm tra đăng nhập cho quản trị viên hoặc khách hàng
+      if (credentials.isAdmin) {
+        // Tìm nhân viên
+        user = await NhanVien.findOne({ where: { Email: credentials.Email } });
+        role = 'admin';
+        if (user) {
+          userId = user.MaNV;
+        }
+      } else {
+        // Tìm khách hàng
+        user = await KhachHang.findOne({ where: { Email: credentials.Email } });
+        role = 'customer';
+        if (user) {
+          userId = user.MaKH;
+        }
+      }
+
       if (!user) {
         throw new AppError('Email hoặc mật khẩu không chính xác.', 401);
       }
 
       // Kiểm tra mật khẩu
-      const isPasswordCorrect = await user.comparePassword(credentials.password);
+      const isPasswordCorrect = await user.comparePassword(credentials.MatKhau);
       if (!isPasswordCorrect) {
         throw new AppError('Email hoặc mật khẩu không chính xác.', 401);
       }
 
       // Kiểm tra người dùng có bị khóa không
-      if (!user.isActive) {
+      if (!user.TrangThai) {
         throw new AppError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
       }
 
       // Cập nhật thời gian đăng nhập cuối
-      await user.update({ lastLogin: new Date() });
+      if (credentials.isAdmin) {
+        await (user as NhanVien).update({ LanDangNhapCuoi: new Date() });
+      } else {
+        await (user as KhachHang).update({ LanDangNhapCuoi: new Date() });
+      }
 
       // Tạo JWT token
-      const token = this.generateToken(user.id, user.role);
+      const token = this.generateToken(userId, String(user.MaVaiTro), role);
 
       // Không trả về mật khẩu
       const userWithoutPassword = { ...user.toJSON() };
-      if ('password' in userWithoutPassword) {
-        delete (userWithoutPassword as any).password;
+      if ('MatKhau' in userWithoutPassword) {
+        delete (userWithoutPassword as any).MatKhau;
       }
 
       return {
@@ -108,14 +151,14 @@ class AuthService {
   /**
    * Tạo JWT token
    */
-  generateToken(userId: string, role: string): string {
+  generateToken(userId: string, vaiTroId: string, userType: string): string {
     // Đơn giản hóa bằng cách sử dụng giá trị cố định
     const options: SignOptions = {
       expiresIn: '7d'  // Sử dụng giá trị cố định '7d'
     };
     
     return jwt.sign(
-      { id: userId, role },
+      { id: userId, vaiTroId, userType },
       config.JWT_SECRET,
       options
     );
@@ -124,11 +167,18 @@ class AuthService {
   /**
    * Lấy thông tin người dùng từ token
    */
-  async getUserFromToken(userId: string) {
+  async getUserFromToken(userId: string, userType: string) {
     try {
-      const user = await User.findByPk(userId, {
-        attributes: { exclude: ['password'] }
-      });
+      let user;
+      if (userType === 'admin') {
+        user = await NhanVien.findByPk(userId, {
+          attributes: { exclude: ['MatKhau'] }
+        });
+      } else {
+        user = await KhachHang.findByPk(userId, {
+          attributes: { exclude: ['MatKhau'] }
+        });
+      }
 
       if (!user) {
         throw new AppError('Người dùng không tồn tại.', 404);
@@ -145,25 +195,38 @@ class AuthService {
   /**
    * Cập nhật thông tin người dùng
    */
-  async updateUserProfile(userId: string, userData: IUserUpdate) {
+  async updateUserProfile(userId: string, userData: IUserUpdate, userType: string) {
     try {
-      // Tìm người dùng
-      const user = await User.findByPk(userId);
-      if (!user) {
-        throw new AppError('Không tìm thấy người dùng.', 404);
+      let user;
+      // Tìm người dùng dựa vào loại
+      if (userType === 'admin') {
+        user = await NhanVien.findByPk(userId);
+        if (!user) {
+          throw new AppError('Không tìm thấy người dùng.', 404);
+        }
+        
+        // Cập nhật thông tin
+        await (user as NhanVien).update({
+          HoTen: userData.HoTen,
+          SoDienThoai: userData.SoDienThoai,
+        });
+      } else {
+        user = await KhachHang.findByPk(userId);
+        if (!user) {
+          throw new AppError('Không tìm thấy người dùng.', 404);
+        }
+        
+        // Cập nhật thông tin
+        await (user as KhachHang).update({
+          HoTen: userData.HoTen,
+          SoDienThoai: userData.SoDienThoai,
+        });
       }
-
-      // Cập nhật thông tin
-      await user.update({
-        fullName: userData.fullName,
-        phoneNumber: userData.phoneNumber,
-        address: userData.address,
-      });
 
       // Không trả về mật khẩu
       const userWithoutPassword = { ...user.toJSON() };
-      if ('password' in userWithoutPassword) {
-        delete (userWithoutPassword as any).password;
+      if ('MatKhau' in userWithoutPassword) {
+        delete (userWithoutPassword as any).MatKhau;
       }
 
       return userWithoutPassword;

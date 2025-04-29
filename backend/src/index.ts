@@ -148,33 +148,75 @@ app.get('/', (req: Request, res: Response) => {
         <h2>API Endpoints</h2>
         
         <div class="section">
-          <h3>Authentication</h3>
+          <h3>Khách hàng</h3>
           <div class="endpoints">
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/auth/register</span> - Đăng ký người dùng mới
+              <span>/api/khachhangs/register</span> - Đăng ký khách hàng mới
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/auth/login</span> - Đăng nhập
-            </div>
-            <div class="endpoint">
-              <span class="method post">POST</span>
-              <span>/api/auth/logout</span> - Đăng xuất
+              <span>/api/khachhangs/login</span> - Đăng nhập
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/auth/profile</span> - Lấy thông tin người dùng hiện tại
+              <span>/api/khachhangs/profile</span> - Lấy thông tin cá nhân
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/auth/profile</span> - Cập nhật thông tin người dùng
+              <span>/api/khachhangs/:id</span> - Cập nhật thông tin khách hàng
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/khachhangs</span> - Lấy danh sách khách hàng
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/khachhangs/:id</span> - Lấy thông tin chi tiết khách hàng
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/khachhangs/:id/deactivate</span> - Vô hiệu hóa khách hàng
+              <span class="role">admin</span>
             </div>
           </div>
         </div>
         
         <div class="section">
-          <h3>Products</h3>
+          <h3>Nhân viên</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/nhanviens</span> - Lấy danh sách nhân viên
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/nhanviens/:id</span> - Lấy thông tin chi tiết nhân viên
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/nhanviens</span> - Tạo nhân viên mới
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method put">PUT</span>
+              <span>/api/nhanviens/:id</span> - Cập nhật thông tin nhân viên
+              <span class="role">admin</span>
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/nhanviens/:id/deactivate</span> - Vô hiệu hóa nhân viên
+              <span class="role">admin</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Sản phẩm</h3>
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
@@ -206,7 +248,7 @@ app.get('/', (req: Request, res: Response) => {
         </div>
         
         <div class="section">
-          <h3>Categories</h3>
+          <h3>Danh mục</h3>
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
@@ -235,25 +277,55 @@ app.get('/', (req: Request, res: Response) => {
         </div>
         
         <div class="section">
-          <h3>Orders</h3>
+          <h3>Đơn hàng</h3>
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/orders</span> - Lấy danh sách đơn hàng của người dùng hiện tại
+              <span>/api/donhangs</span> - Lấy danh sách đơn hàng
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/orders/:id</span> - Lấy thông tin chi tiết đơn hàng
+              <span>/api/donhangs/:id</span> - Lấy thông tin chi tiết đơn hàng
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/orders</span> - Tạo đơn hàng mới
+              <span>/api/donhangs</span> - Tạo đơn hàng mới
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/orders/:id/status</span> - Cập nhật trạng thái đơn hàng
+              <span>/api/donhangs/:id</span> - Cập nhật trạng thái đơn hàng
               <span class="role">admin</span>
-              <span class="role">seller</span>
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/donhangs/:id/cancel</span> - Hủy đơn hàng
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Đánh giá</h3>
+          <div class="endpoints">
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/reviews</span> - Lấy danh sách đánh giá
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/reviews/:id</span> - Lấy thông tin chi tiết đánh giá
+            </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/reviews</span> - Tạo đánh giá mới
+            </div>
+            <div class="endpoint">
+              <span class="method put">PUT</span>
+              <span>/api/reviews/:id</span> - Cập nhật đánh giá
+            </div>
+            <div class="endpoint">
+              <span class="method delete">DELETE</span>
+              <span>/api/reviews/:id</span> - Xóa đánh giá
+              <span class="role">admin</span>
             </div>
           </div>
         </div>

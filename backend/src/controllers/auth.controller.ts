@@ -10,8 +10,30 @@ import { mockAdminUser, mockSellerUser, mockTokens } from '../mocks';
 declare module 'express-session' {
   interface SessionData {
     userId?: string;
-    userRole?: string;
+    userType?: string;
+    vaiTroId?: number;
   }
+}
+
+// Mở rộng interface Request
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        vaiTroId: string;
+        userType: string;
+      };
+    }
+  }
+}
+
+// Interfaces cho user response
+interface IUserResponse {
+  [key: string]: any; // Để có thể truy cập thuộc tính với string index
+  MaKH?: string;
+  MaNV?: string;
+  MaVaiTro?: number;
 }
 
 // Hàm kiểm tra xem có đang bỏ qua DB hay không
@@ -21,7 +43,7 @@ const AuthController = {
   // Đăng ký
   async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password, fullName, phoneNumber, address } = req.body;
+      const { email, password, fullName, phoneNumber } = req.body;
 
       // Validation
       if (!email || !password || !fullName) {
@@ -45,11 +67,11 @@ const AuthController = {
 
       // Đăng ký người dùng thật với DB
       const user = await authService.register({
-        email,
-        password,
-        fullName,
-        phoneNumber,
-        address,
+        Email: email,
+        MatKhau: password,
+        HoTen: fullName,
+        SoDienThoai: phoneNumber,
+        MaVaiTro: 1, // Vai trò mặc định khách hàng
       });
 
       return successResponse(res, user, 'Đăng ký tài khoản thành công.', 201);
@@ -61,7 +83,7 @@ const AuthController = {
   // Đăng nhập
   async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body;
+      const { email, password, isAdmin } = req.body;
 
       // Validation
       if (!email || !password) {
@@ -75,7 +97,8 @@ const AuthController = {
           // Lưu thông tin vào session nếu session tồn tại
           if (req.session && process.env.SKIP_REDIS !== 'true') {
             req.session.userId = mockAdminUser.id;
-            req.session.userRole = mockAdminUser.role;
+            req.session.userType = 'admin';
+            req.session.vaiTroId = 1;
           }
 
           // Đặt cookie JWT nếu cần
@@ -96,7 +119,8 @@ const AuthController = {
           // Lưu thông tin vào session nếu session tồn tại
           if (req.session && process.env.SKIP_REDIS !== 'true') {
             req.session.userId = mockSellerUser.id;
-            req.session.userRole = mockSellerUser.role;
+            req.session.userType = 'admin';
+            req.session.vaiTroId = 2;
           }
 
           // Đặt cookie JWT nếu cần
@@ -119,12 +143,18 @@ const AuthController = {
       }
 
       // Đăng nhập thật với DB
-      const result = await authService.login({ email, password });
+      const result = await authService.login({ 
+        Email: email, 
+        MatKhau: password,
+        isAdmin: isAdmin === true
+      });
 
       // Lưu thông tin vào session nếu session tồn tại
       if (req.session && process.env.SKIP_REDIS !== 'true') {
-        req.session.userId = result.user.id;
-        req.session.userRole = result.user.role;
+        const userObj = result.user as IUserResponse;
+        req.session.userId = isAdmin ? userObj.MaNV : userObj.MaKH;
+        req.session.userType = isAdmin ? 'admin' : 'customer';
+        req.session.vaiTroId = userObj.MaVaiTro;
       }
 
       // Đặt cookie JWT nếu cần
@@ -188,7 +218,7 @@ const AuthController = {
       // Nếu đang bỏ qua DB, trả về user giả
       if (isSkipDB()) {
         // Kiểm tra xem có phải là tài khoản seller không
-        if (req.user && req.user.role === 'seller') {
+        if (req.user && req.user.userType === 'admin') {
           return successResponse(
             res, 
             mockSellerUser, 
@@ -204,7 +234,7 @@ const AuthController = {
       }
 
       // Lấy thông tin người dùng thật từ DB
-      const user = await authService.getUserFromToken(req.user.id);
+      const user = await authService.getUserFromToken(req.user.id, req.user.userType);
       return successResponse(res, user, 'Lấy thông tin người dùng thành công.');
     } catch (error) {
       next(error);
@@ -218,24 +248,23 @@ const AuthController = {
         return next(new AppError('Không tìm thấy thông tin người dùng.', 401));
       }
 
-      const { fullName, phoneNumber, address } = req.body;
+      const { hoTen, soDienThoai } = req.body;
       
       // Kiểm tra các trường dữ liệu
-      if (!fullName) {
+      if (!hoTen) {
         return next(new AppError('Họ tên không được để trống.', 400));
       }
 
       // Nếu đang bỏ qua DB, trả về user giả đã cập nhật
       if (isSkipDB()) {
         // Xác định user cần cập nhật dựa trên role
-        const baseUser = req.user && req.user.role === 'seller' ? mockSellerUser : mockAdminUser;
+        const baseUser = req.user && req.user.userType === 'admin' ? mockSellerUser : mockAdminUser;
         
         // Cập nhật thông tin user
         const updatedUser = { 
           ...baseUser,
-          fullName: fullName || baseUser.fullName,
-          phoneNumber: phoneNumber || '',
-          address: address || '',
+          hoTen: hoTen || baseUser.fullName,
+          soDienThoai: soDienThoai || '',
           updatedAt: new Date()
         };
 
@@ -248,16 +277,15 @@ const AuthController = {
 
       // Cập nhật thông tin người dùng thật từ DB
       const updatedUser = await authService.updateUserProfile(req.user.id, {
-        fullName,
-        phoneNumber,
-        address
-      });
+        HoTen: hoTen,
+        SoDienThoai: soDienThoai,
+      }, req.user.userType);
 
       return successResponse(res, updatedUser, 'Cập nhật thông tin người dùng thành công.');
     } catch (error) {
       next(error);
     }
-  },
+  }
 };
 
 export default AuthController; 

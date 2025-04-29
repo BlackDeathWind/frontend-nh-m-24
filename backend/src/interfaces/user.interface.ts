@@ -45,3 +45,76 @@ export interface IUserProfile {
   avatarUrl?: string;
   role: string;
 } 
+
+// Interface cho đối tượng Khách hàng
+export interface IKhachHang {
+  MaKH: string;
+  HoTen: string;
+  Email: string;
+  MatKhau: string;
+  SoDienThoai?: string;
+  NgayDangKy: Date;
+  LanDangNhapCuoi?: Date;
+  TrangThai: boolean;
+  MaVaiTro: number;
+}
+
+// Interface dùng để tạo Khách hàng mới
+export interface IKhachHangCreate {
+  HoTen: string;
+  Email: string;
+  MatKhau: string;
+  SoDienThoai?: string;
+  MaVaiTro?: number;
+}
+
+// Interface dùng để đăng nhập
+export interface IKhachHangLogin {
+  Email: string;
+  MatKhau: string;
+}
+
+// Interface dùng để cập nhật thông tin Khách hàng
+export interface IKhachHangUpdate {
+  HoTen?: string;
+  SoDienThoai?: string;
+  TrangThai?: boolean;
+}
+
+// Interface cho đối tượng Nhân viên
+export interface INhanVien {
+  MaNV: string;
+  HoTen: string;
+  Email: string;
+  MatKhau: string;
+  SoDienThoai?: string;
+  MaVaiTro: number;
+  TrangThai: boolean;
+  NgayTao: Date;
+  NgayCapNhat: Date;
+  LanDangNhapCuoi?: Date;
+}
+
+// Interface dùng để tạo Nhân viên mới
+export interface INhanVienCreate {
+  HoTen: string;
+  Email: string;
+  MatKhau: string;
+  SoDienThoai?: string;
+  MaVaiTro: number;
+}
+
+// Interface dùng để cập nhật thông tin Nhân viên
+export interface INhanVienUpdate {
+  HoTen?: string;
+  SoDienThoai?: string;
+  MaVaiTro?: number;
+  TrangThai?: boolean;
+}
+
+// Interface cho đối tượng Vai trò
+export interface IVaiTro {
+  MaVaiTro: number;
+  TenVaiTro: string;
+  MoTa?: string;
+} 

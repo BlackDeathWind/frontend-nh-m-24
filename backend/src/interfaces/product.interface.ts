@@ -1,60 +1,57 @@
-export interface IProduct {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  categories: string[];
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  slug: string;
+// Interface cho đối tượng Sản phẩm
+export interface ISanPham {
+  MaSP: number;
+  TenSP: string;
+  MoTaDai: string;
+  GiaBan: number;
+  SoLuongTon: number;
+  HinhAnhChinhURL: string;
+  MaDanhMuc: number;
+  LuotXem: number;
+  NgayTao: Date;
+  NgayCapNhat: Date;
 }
 
-export interface IProductCreate {
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  categories: string[];
-  images: string[];
-  isActive?: boolean;
+// Interface dùng để tạo Sản phẩm mới
+export interface ISanPhamCreate {
+  TenSP: string;
+  MoTaDai: string;
+  GiaBan: number;
+  SoLuongTon: number;
+  HinhAnhChinhURL: string;
+  MaDanhMuc: number;
 }
 
-export interface IProductUpdate {
-  name?: string;
-  description?: string;
-  price?: number;
-  stock?: number;
-  categories?: string[];
-  images?: string[];
-  isActive?: boolean;
+// Interface dùng để cập nhật Sản phẩm
+export interface ISanPhamUpdate {
+  TenSP?: string;
+  MoTaDai?: string;
+  GiaBan?: number;
+  SoLuongTon?: number;
+  HinhAnhChinhURL?: string;
+  MaDanhMuc?: number;
 }
 
-export interface IProductReview {
-  id: string;
-  productId: string;
-  userId: string;
-  rating: number;
-  comment: string;
-  createdAt: Date;
-  updatedAt: Date;
-  user?: {
-    id: string;
-    fullName: string;
-    avatarUrl?: string;
-  };
+// Interface cho đối tượng Danh mục
+export interface IDanhMuc {
+  MaDanhMuc: number;
+  TenDanhMuc: string;
+  MoTa?: string;
+  HinhAnh?: string;
+  NgayTao: Date;
+  NgayCapNhat: Date;
 }
 
-export interface IProductFilter {
-  category?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating';
-  search?: string;
-  page?: number;
-  limit?: number;
+// Interface dùng để tạo Danh mục mới
+export interface IDanhMucCreate {
+  TenDanhMuc: string;
+  MoTa?: string;
+  HinhAnh?: string;
+}
+
+// Interface dùng để cập nhật Danh mục
+export interface IDanhMucUpdate {
+  TenDanhMuc?: string;
+  MoTa?: string;
+  HinhAnh?: string;
 } 

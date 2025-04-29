@@ -1,48 +1,58 @@
-export interface IOrder {
-  id: string;
-  userId: string;
-  orderNumber: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  totalAmount: number;
-  shippingAddress: string;
-  paymentMethod: 'cod' | 'digital';
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  createdAt: Date;
-  updatedAt: Date;
-  orderItems?: IOrderItem[];
+// Interface cho đối tượng Đơn hàng
+export interface IDonHang {
+  MaDonHang: number;
+  MaKH: string;
+  TenNguoiNhan: string;
+  SoDienThoaiNhan: string;
+  DiaChiGiaoHang: string;
+  EmailNguoiNhan: string;
+  NgayDatHang: Date;
+  TongTienSanPham: number;
+  PhiVanChuyen: number;
+  GiamGia: number;
+  TongThanhToan: number;
+  PhuongThucThanhToan: string;
+  TrangThaiThanhToan: string;
+  TrangThaiDonHang: string;
+  GhiChuKhachHang?: string;
+  GhiChuQuanTri?: string;
+  NgayCapNhat: Date;
 }
 
-export interface IOrderItem {
-  id: string;
-  orderId: string;
-  productId: string;
-  quantity: number;
-  price: number;
-  productName: string;
-  productImage?: string;
+// Interface cho đối tượng Chi tiết đơn hàng
+export interface IChiTietDonHang {
+  MaChiTietDH: number;
+  MaDonHang: number;
+  MaSP: number;
+  SoLuong: number;
+  DonGia: number;
+  ThanhTien: number;
 }
 
-export interface IOrderCreate {
-  userId: string;
-  items: {
-    productId: string;
-    quantity: number;
+// Interface dùng để tạo Đơn hàng mới
+export interface IDonHangCreate {
+  MaKH: string;
+  TenNguoiNhan: string;
+  SoDienThoaiNhan: string;
+  DiaChiGiaoHang: string;
+  EmailNguoiNhan: string;
+  TongTienSanPham: number;
+  PhiVanChuyen: number;
+  GiamGia: number;
+  TongThanhToan: number;
+  PhuongThucThanhToan: string;
+  GhiChuKhachHang?: string;
+  ChiTietDonHang: {
+    MaSP: number;
+    SoLuong: number;
+    DonGia: number;
+    ThanhTien: number;
   }[];
-  shippingAddress: string;
-  paymentMethod: 'cod' | 'digital';
-  notes?: string;
-  digitalWallet?: 'momo' | 'zalopay' | 'vnpay';
 }
 
-export interface IOrderUpdate {
-  status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus?: 'pending' | 'paid' | 'failed';
-}
-
-export interface IOrderWithUser extends IOrder {
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-  };
+// Interface dùng để cập nhật Đơn hàng
+export interface IDonHangUpdate {
+  TrangThaiDonHang?: string;
+  TrangThaiThanhToan?: string;
+  GhiChuQuanTri?: string;
 } 

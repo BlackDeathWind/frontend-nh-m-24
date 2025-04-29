@@ -1,53 +1,53 @@
-import User from './user.model';
-import Product from './product.model';
-import Category from './category.model';
-import Review from './review.model';
-import { Cart, CartItem } from './cart.model';
-import { Order, OrderItem } from './order.model';
-// Khi tạo model, import và xuất chúng ở đây
-// import Product from './product.model';
-// import Order from './order.model';
-// import OrderItem from './orderItem.model';
+import KhachHang from './khachhang.model';
+import NhanVien from './nhanvien.model';
+import VaiTro from './vaitro.model';
+import SanPham from './sanpham.model';
+import DanhMuc from './danhmuc.model';
+import DonHang from './donhang.model';
+import ChiTietDonHang from './chitietdonhang.model';
+import DanhGia from './danhgia.model';
 
 // Thiết lập các mối quan hệ giữa các mô hình
 
-// User - Order
-User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
-Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// KhachHang - VaiTro
+KhachHang.belongsTo(VaiTro, { foreignKey: 'MaVaiTro' });
+VaiTro.hasMany(KhachHang, { foreignKey: 'MaVaiTro' });
 
-// User - Cart
-User.hasOne(Cart, { foreignKey: 'userId', as: 'cart' });
-Cart.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// NhanVien - VaiTro
+NhanVien.belongsTo(VaiTro, { foreignKey: 'MaVaiTro' });
+VaiTro.hasMany(NhanVien, { foreignKey: 'MaVaiTro' });
 
-// User - Review
-User.hasMany(Review, { foreignKey: 'userId', as: 'reviews' });
-Review.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// SanPham - DanhMuc
+SanPham.belongsTo(DanhMuc, { foreignKey: 'MaDanhMuc' });
+DanhMuc.hasMany(SanPham, { foreignKey: 'MaDanhMuc' });
 
-// Product - Review
-Product.hasMany(Review, { foreignKey: 'productId', as: 'reviews' });
-Review.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+// DonHang - KhachHang
+DonHang.belongsTo(KhachHang, { foreignKey: 'MaKH' });
+KhachHang.hasMany(DonHang, { foreignKey: 'MaKH' });
 
-// Product - CartItem
-Product.hasMany(CartItem, { foreignKey: 'productId', as: 'cartItems' });
-CartItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+// ChiTietDonHang - DonHang
+ChiTietDonHang.belongsTo(DonHang, { foreignKey: 'MaDonHang' });
+DonHang.hasMany(ChiTietDonHang, { foreignKey: 'MaDonHang' });
 
-// Product - OrderItem
-Product.hasMany(OrderItem, { foreignKey: 'productId', as: 'orderItems' });
-OrderItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+// ChiTietDonHang - SanPham
+ChiTietDonHang.belongsTo(SanPham, { foreignKey: 'MaSP' });
+SanPham.hasMany(ChiTietDonHang, { foreignKey: 'MaSP' });
 
-// Category và Product có mối quan hệ many-to-many thông qua categories array của Product
+// DanhGia - SanPham
+DanhGia.belongsTo(SanPham, { foreignKey: 'MaSP' });
+SanPham.hasMany(DanhGia, { foreignKey: 'MaSP' });
+
+// DanhGia - KhachHang
+DanhGia.belongsTo(KhachHang, { foreignKey: 'MaKH' });
+KhachHang.hasMany(DanhGia, { foreignKey: 'MaKH' });
 
 export {
-  User,
-  Product,
-  Category,
-  Review,
-  Cart,
-  CartItem,
-  Order,
-  OrderItem
-  // Xuất các model khác ở đây
-  // Product,
-  // Order,
-  // OrderItem,
+  KhachHang,
+  NhanVien,
+  VaiTro,
+  SanPham,
+  DanhMuc,
+  DonHang,
+  ChiTietDonHang,
+  DanhGia
 }; 

@@ -1,34 +1,25 @@
-export interface IReview {
-  id: string;
-  productId: string;
-  userId: string;
-  rating: number;
-  comment: string;
-  images?: string[];
-  isVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+// Interface cho đối tượng Đánh giá
+export interface IDanhGia {
+  MaDanhGia: number;
+  MaSP: number;
+  MaKH: string;
+  DiemSo: number;
+  BinhLuan?: string;
+  NgayDanhGia: Date;
+  TrangThai: boolean;
 }
 
-export interface IReviewCreate {
-  productId: string;
-  userId: string;
-  rating: number;
-  comment: string;
-  images?: string[];
+// Interface dùng để tạo Đánh giá mới
+export interface IDanhGiaCreate {
+  MaSP: number;
+  MaKH: string;
+  DiemSo: number;
+  BinhLuan?: string;
 }
 
-export interface IReviewUpdate {
-  rating?: number;
-  comment?: string;
-  images?: string[];
-  isVerified?: boolean;
-}
-
-export interface IReviewWithUser extends IReview {
-  user: {
-    id: string;
-    fullName: string;
-    avatarUrl?: string;
-  };
+// Interface dùng để cập nhật Đánh giá
+export interface IDanhGiaUpdate {
+  DiemSo?: number;
+  BinhLuan?: string;
+  TrangThai?: boolean;
 } 

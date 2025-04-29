@@ -36,11 +36,11 @@ const config: Config = {
     PASSWORD: process.env.REDIS_PASSWORD || '',
   },
   DB: {
-    HOST: process.env.DB_HOST || 'localhost',
+    HOST: process.env.DB_HOST || 'LAPTOP-FIOKSCC8',
     PORT: parseInt(process.env.DB_PORT || '1433', 10),
-    NAME: process.env.DB_NAME || 'ecommerce',
+    NAME: process.env.DB_NAME || 'web',
     USER: process.env.DB_USER || 'sa',
-    PASSWORD: process.env.DB_PASSWORD || '',
+    PASSWORD: process.env.DB_PASSWORD || 'man123',
   },
 };
 

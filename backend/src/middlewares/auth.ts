@@ -3,19 +3,25 @@ import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { AppError } from './errorHandler';
 import { redisClient } from '../config/redis';
+import { KhachHang, NhanVien } from '../models';
 
 // Mở rộng interface Request để thêm thuộc tính user
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user?: {
+        id: string;
+        vaiTroId: string;
+        userType: string;
+      };
     }
   }
 }
 
 interface JwtPayload {
   id: string;
-  role: string;
+  vaiTroId: string;
+  userType: string;
   iat: number;
   exp: number;
   [key: string]: any;
@@ -56,28 +62,52 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       }
     }
 
-    // 4) Kiểm tra user có tồn tại không - tạm thời bỏ qua, sẽ thêm khi có model User
-    // const user = await User.findByPk(decoded.id);
-    // if (!user) {
-    //   return next(new AppError('Người dùng không tồn tại.', 401));
-    // }
-
-    // 5) Kiểm tra mật khẩu thay đổi sau khi token được cấp - tạm thời bỏ qua
+    // 4) Kiểm tra user có tồn tại không - nếu không bỏ qua DB
+    if (process.env.SKIP_DB !== 'true') {
+      try {
+        let userExists = false;
+        
+        if (decoded.userType === 'admin') {
+          const admin = await NhanVien.findByPk(decoded.id);
+          userExists = !!admin;
+        } else {
+          const customer = await KhachHang.findByPk(decoded.id);
+          userExists = !!customer;
+        }
+        
+        if (!userExists) {
+          return next(new AppError('Người dùng không tồn tại hoặc đã bị xóa.', 401));
+        }
+      } catch (error) {
+        console.warn('Không thể kiểm tra sự tồn tại của người dùng, bỏ qua bước này');
+      }
+    }
 
     // Lưu user vào request để sử dụng sau này
-    req.user = decoded;
+    req.user = {
+      id: decoded.id,
+      vaiTroId: decoded.vaiTroId,
+      userType: decoded.userType
+    };
     next();
   } catch (error: any) {
     return next(new AppError(error.message || 'Lỗi xác thực. Vui lòng đăng nhập lại.', 401));
   }
 };
 
-export const restrictTo = (...roles: string[]) => {
+export const restrictTo = (...vaiTroIds: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // roles: ['admin', 'manager']
-    if (!req.user || !roles.includes(req.user.role)) {
+    // Kiểm tra vai trò
+    if (!req.user || !vaiTroIds.includes(req.user.vaiTroId)) {
       return next(new AppError('Bạn không có quyền thực hiện hành động này.', 403));
     }
     next();
   };
+};
+
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user || req.user.userType !== 'admin') {
+    return next(new AppError('Chỉ quản trị viên mới có quyền thực hiện hành động này.', 403));
+  }
+  next();
 }; 
