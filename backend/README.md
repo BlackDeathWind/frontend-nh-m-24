@@ -11,20 +11,199 @@ Backend API cho ứng dụng E-commerce với Node.js, Express, WebSocket và SQ
 - **Cache & Session Store**: Redis
 - **Ngôn ngữ**: TypeScript
 
-## Cấu trúc thư mục
+## Cấu trúc thư mục chi tiết
 
 ```
-src/
-├── config/         # Cấu hình ứng dụng
-├── controllers/    # Controllers xử lý logic
-├── middlewares/    # Middleware Express
-├── models/         # Định nghĩa mô hình dữ liệu
-├── routes/         # Định nghĩa API routes
-├── services/       # Business logic
-├── utils/          # Tiện ích
-├── interfaces/     # TypeScript interfaces
-└── index.ts        # Entry point
+backend/
+├── src/
+│   ├── config/                  # Cấu hình ứng dụng
+│   │   ├── config.ts            # Cấu hình biến môi trường
+│   │   ├── database.ts          # Kết nối SQL Server với Sequelize
+│   │   ├── redis.ts             # Cấu hình Redis
+│   │   └── websocket.ts         # Cấu hình WebSocket/Socket.IO
+│   │
+│   ├── controllers/             # Controllers xử lý logic
+│   │   ├── auth.controller.ts   # Xử lý xác thực người dùng
+│   │   ├── category.controller.ts # Quản lý danh mục
+│   │   ├── donhang.controller.ts # Quản lý đơn hàng
+│   │   ├── khachhang.controller.ts # Quản lý khách hàng
+│   │   ├── nhanvien.controller.ts # Quản lý nhân viên
+│   │   ├── product.controller.ts # Quản lý sản phẩm
+│   │   └── review.controller.ts  # Quản lý đánh giá
+│   │
+│   ├── interfaces/              # TypeScript interfaces
+│   │   ├── category.interface.ts # Interface cho danh mục
+│   │   ├── order.interface.ts   # Interface cho đơn hàng
+│   │   ├── product.interface.ts # Interface cho sản phẩm
+│   │   ├── review.interface.ts  # Interface cho đánh giá
+│   │   └── user.interface.ts    # Interface cho người dùng
+│   │
+│   ├── middlewares/             # Middleware Express
+│   │   ├── auth.ts              # Middleware xác thực
+│   │   ├── cache.ts             # Middleware cache
+│   │   ├── cors.ts              # Middleware CORS
+│   │   ├── errorHandler.ts      # Xử lý lỗi toàn cục
+│   │   └── session.ts           # Quản lý phiên
+│   │
+│   ├── models/                  # Định nghĩa mô hình dữ liệu
+│   │   ├── chitietdonhang.model.ts # Mô hình chi tiết đơn hàng
+│   │   ├── danhmuc.model.ts     # Mô hình danh mục
+│   │   ├── danhgia.model.ts     # Mô hình đánh giá
+│   │   ├── donhang.model.ts     # Mô hình đơn hàng
+│   │   ├── index.ts             # Cấu hình quan hệ giữa các mô hình
+│   │   ├── khachhang.model.ts   # Mô hình khách hàng
+│   │   ├── nhanvien.model.ts    # Mô hình nhân viên
+│   │   ├── sanpham.model.ts     # Mô hình sản phẩm
+│   │   └── vaitro.model.ts      # Mô hình vai trò
+│   │
+│   ├── routes/                  # Định nghĩa API routes
+│   │   ├── auth.routes.ts       # Routes xác thực
+│   │   ├── category.routes.ts   # Routes danh mục
+│   │   ├── donhang.routes.ts    # Routes đơn hàng
+│   │   ├── index.ts             # Cấu hình tất cả routes
+│   │   ├── khachhang.routes.ts  # Routes khách hàng
+│   │   ├── mock.routes.ts       # Routes dữ liệu mẫu
+│   │   ├── nhanvien.routes.ts   # Routes nhân viên
+│   │   ├── product.routes.ts    # Routes sản phẩm
+│   │   └── review.routes.ts     # Routes đánh giá
+│   │
+│   ├── services/                # Business logic
+│   │   ├── auth.service.ts      # Dịch vụ xác thực
+│   │   ├── category.service.ts  # Dịch vụ danh mục
+│   │   ├── khachhang.service.ts # Dịch vụ khách hàng
+│   │   ├── order.service.ts     # Dịch vụ đơn hàng
+│   │   ├── product.service.ts   # Dịch vụ sản phẩm
+│   │   └── review.service.ts    # Dịch vụ đánh giá
+│   │
+│   ├── types/                   # Định nghĩa types
+│   │   └── auth.ts              # Types cho xác thực
+│   │
+│   ├── utils/                   # Tiện ích
+│   │   ├── helpers.ts           # Hàm hỗ trợ
+│   │   ├── logger.ts            # Ghi log ứng dụng
+│   │   ├── responseHandler.ts   # Định dạng phản hồi API
+│   │   └── validator.ts         # Xác thực đầu vào
+│   │
+│   ├── mocks/                   # Dữ liệu mẫu
+│   │   └── data.ts              # Dữ liệu mẫu cho chế độ phát triển
+│   │
+│   └── index.ts                 # Entry point
+│
+├── node_modules/                # Thư viện npm
+├── logs/                        # Thư mục chứa log
+├── package.json                 # Cấu hình npm
+├── package-lock.json            # Lock file npm
+├── tsconfig.json                # Cấu hình TypeScript
+├── .gitignore                   # Cấu hình Git
+├── ket_noi_sql_server.txt       # Hướng dẫn kết nối SQL Server
+└── README.md                    # Tài liệu
 ```
+
+## Chi tiết triển khai
+
+### Models (Mô hình dữ liệu)
+
+Backend sử dụng Sequelize ORM để tương tác với SQL Server, với các mô hình dữ liệu chính:
+
+1. **KhachHang**: Quản lý thông tin khách hàng và người dùng hệ thống
+   - Tự động hash mật khẩu trước khi lưu vào database với bcrypt
+   - Hỗ trợ so sánh mật khẩu để xác thực đăng nhập
+   - Quản lý trạng thái kích hoạt của tài khoản
+
+2. **NhanVien**: Quản lý thông tin nhân viên và quản trị viên
+   - Phân quyền dựa trên vai trò (MaVaiTro)
+   - Theo dõi thời gian đăng nhập cuối
+
+3. **SanPham**: Quản lý thông tin sản phẩm
+   - Hỗ trợ lưu trữ thông tin chi tiết, hình ảnh, giá cả
+   - Liên kết với danh mục sản phẩm
+
+4. **DonHang & ChiTietDonHang**: Quản lý đơn hàng
+   - Đơn hàng chính lưu thông tin chung: khách hàng, địa chỉ, phương thức thanh toán
+   - Chi tiết đơn hàng lưu từng sản phẩm, số lượng, giá
+
+5. **DanhGia**: Hệ thống đánh giá sản phẩm
+   - Liên kết giữa khách hàng và sản phẩm
+   - Hỗ trợ điểm số và nội dung đánh giá
+
+### Services (Logic nghiệp vụ)
+
+Backend được thiết kế theo mô hình 3 lớp với Services đóng vai trò xử lý logic nghiệp vụ:
+
+1. **AuthService**: Xử lý các tác vụ xác thực
+   - Đăng ký, đăng nhập, đăng xuất
+   - Tạo và xác thực JWT token
+   - Quản lý token blacklist với Redis
+   - Hỗ trợ hai loại người dùng: khách hàng và quản trị viên
+
+2. **KhachHangService & NhanVienService**: Quản lý người dùng
+   - CRUD đầy đủ cho các đối tượng người dùng
+   - Tìm kiếm, phân trang, lọc người dùng
+
+3. **ProductService**: Quản lý sản phẩm
+   - CRUD đầy đủ cho sản phẩm
+   - Tìm kiếm, phân trang, lọc sản phẩm
+   - Quản lý hình ảnh sản phẩm
+
+4. **OrderService**: Quản lý đơn hàng
+   - Tạo đơn hàng mới với nhiều sản phẩm
+   - Cập nhật trạng thái đơn hàng
+   - Tính toán tổng tiền, chiết khấu, thuế
+
+### Controllers & Routes
+
+Các controllers được thiết kế để xử lý request từ client và giao tiếp với services:
+
+1. **AuthController**: Xử lý các yêu cầu xác thực
+   - Kiểm tra đầu vào, bảo mật
+   - Tạo session và cookie JWT
+   - Phân quyền truy cập
+
+2. **ProductController**: Xử lý các yêu cầu về sản phẩm
+   - Định dạng dữ liệu response
+   - Phân trang kết quả
+   - Xử lý lỗi
+
+### WebSocket
+
+Hệ thống WebSocket được triển khai để:
+
+1. **Thông báo thời gian thực**:
+   - Thông báo trạng thái đơn hàng mới cho admin
+   - Cập nhật tình trạng đơn hàng cho khách hàng
+
+2. **Chat Hỗ trợ khách hàng**:
+   - Giao tiếp realtime giữa khách hàng và nhân viên hỗ trợ
+   - Lưu trữ lịch sử chat
+
+### Bảo mật & Xác thực
+
+Backend áp dụng nhiều lớp bảo mật:
+
+1. **JWT Authentication**:
+   - Token được tạo khi đăng nhập và gửi trong cookie hoặc header
+   - Middleware kiểm tra và xác thực token cho mỗi request
+   - Blacklist token khi đăng xuất
+
+2. **Session Management**:
+   - Session được lưu trữ trong Redis
+   - Đồng bộ giữa nhiều instance của backend (horizontal scaling)
+
+3. **Password Security**:
+   - Mật khẩu được hash với bcrypt
+   - Validation độ mạnh của mật khẩu
+
+### Chế độ phát triển
+
+Backend hỗ trợ chế độ phát triển không cần kết nối đến cơ sở dữ liệu SQL Server và Redis:
+
+1. **Mock Services**: Các services giả lập dữ liệu trong bộ nhớ
+   - Cung cấp dữ liệu demo tương tự dữ liệu thực
+   - Cho phép thử nghiệm API mà không cần cơ sở dữ liệu
+
+2. **Development Flags**:
+   - `SKIP_DB`: Bỏ qua kết nối SQL Server
+   - `SKIP_REDIS`: Bỏ qua kết nối Redis
 
 ## Cài đặt
 
@@ -152,37 +331,6 @@ Trong chế độ phát triển, ứng dụng đã được cấu hình với c�
 ## Quản lý Cache
 
 Backend sử dụng Redis để cache dữ liệu và quản lý session, giúp tăng hiệu suất và tối ưu hóa thời gian phản hồi.
-
-## Phát triển
-
-### Tạo controller mới
-
-```typescript
-import { Request, Response, NextFunction } from 'express';
-
-const ExampleController = {
-  async getItems(req: Request, res: Response, next: NextFunction) {
-    // Xử lý logic
-  }
-};
-
-export default ExampleController;
-```
-
-### Tạo route mới
-
-```typescript
-import { Router } from 'express';
-import ExampleController from '../controllers/example.controller';
-
-const router = Router();
-
-router.get('/items', ExampleController.getItems);
-
-export default router;
-```
-
-Sau đó đăng ký route trong `src/routes/index.ts`.
 
 ## Bảo mật
 
