@@ -1,42 +1,49 @@
 import { Router } from 'express';
 import ProductController from '../controllers/product.controller';
-import { protect, requireAdmin } from '../middlewares/auth';
+import { protect, restrictTo } from '../middlewares/auth';
 
 const router = Router();
 
 /**
- * @route GET /api/products
- * @desc Lấy danh sách sản phẩm
- * @access Public
+ * @route   GET /api/san-pham
+ * @desc    Lấy danh sách sản phẩm
+ * @access  Public
  */
 router.get('/', ProductController.getProducts);
 
 /**
- * @route GET /api/products/:id
- * @desc Lấy thông tin chi tiết sản phẩm
- * @access Public
+ * @route   GET /api/san-pham/ban-chay
+ * @desc    Lấy danh sách sản phẩm bán chạy
+ * @access  Public
+ */
+router.get('/ban-chay', ProductController.getBestSellingProducts);
+
+/**
+ * @route   GET /api/san-pham/:id
+ * @desc    Lấy chi tiết sản phẩm theo ID
+ * @access  Public
  */
 router.get('/:id', ProductController.getProductById);
 
 /**
- * @route POST /api/products
- * @desc Tạo sản phẩm mới
- * @access Private (Admin only)
+ * @route   POST /api/san-pham
+ * @desc    Tạo sản phẩm mới
+ * @access  Private (Admin, Staff)
  */
-router.post('/', protect, requireAdmin, ProductController.createProduct);
+router.post('/', protect, restrictTo('Admin', 'NhanVien'), ProductController.createProduct);
 
 /**
- * @route PUT /api/products/:id
- * @desc Cập nhật sản phẩm
- * @access Private (Admin only)
+ * @route   PUT /api/san-pham/:id
+ * @desc    Cập nhật sản phẩm
+ * @access  Private (Admin, Staff)
  */
-router.put('/:id', protect, requireAdmin, ProductController.updateProduct);
+router.put('/:id', protect, restrictTo('Admin', 'NhanVien'), ProductController.updateProduct);
 
 /**
- * @route DELETE /api/products/:id
- * @desc Xóa sản phẩm
- * @access Private (Admin only)
+ * @route   DELETE /api/san-pham/:id
+ * @desc    Xóa sản phẩm
+ * @access  Private (Admin)
  */
-router.delete('/:id', protect, requireAdmin, ProductController.deleteProduct);
+router.delete('/:id', protect, restrictTo('Admin'), ProductController.deleteProduct);
 
 export default router; 

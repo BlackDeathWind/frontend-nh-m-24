@@ -22,4 +22,10 @@ export interface IDanhGiaUpdate {
   DiemSo?: number;
   BinhLuan?: string;
   TrangThai?: boolean;
+}
+
+// Interface cho đối tượng đánh giá với thông tin sản phẩm và khách hàng
+export interface IDanhGiaWithDetails extends IDanhGia {
+  TenSP: string;
+  TenKhachHang: string;
 } 

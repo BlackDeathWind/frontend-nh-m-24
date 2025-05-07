@@ -1,11 +1,13 @@
 import { SanPham, DanhMuc, DanhGia } from '../models';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../utils/logger';
-import { Op, Order } from 'sequelize';
+import { Op, Order, literal, QueryTypes } from 'sequelize';
+import { ISanPhamWithReviews } from '../interfaces/product.interface';
+import { sequelize } from '../config/database';
 
 class ProductService {
   /**
-   * Lấy danh sách sản phẩm với các bộ lọc
+   * Lấy danh sách sản phẩm với các bộ lọc sử dụng view vw_SanPham
    */
   async getProducts(options: {
     keyword?: string;
@@ -81,7 +83,6 @@ class ProductService {
         include: [
           {
             model: DanhMuc,
-            as: 'DanhMuc',
             attributes: ['MaDanhMuc', 'TenDanhMuc']
           }
         ]
@@ -111,6 +112,90 @@ class ProductService {
   }
 
   /**
+   * Lấy sản phẩm với đánh giá sử dụng view vw_SanPham_DanhGia
+   */
+  async getProductsWithReviews(options: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+  }) {
+    try {
+      const { page = 1, limit = 10, sortBy = 'newest' } = options;
+      const offset = (page - 1) * limit;
+
+      let order: any[] = [];
+      switch (sortBy) {
+        case 'rating':
+          order = [[literal('DiemDanhGiaTrungBinh'), 'DESC']];
+          break;
+        case 'popular':
+          order = [[literal('SoLuongDanhGia'), 'DESC']];
+          break;
+        case 'price_asc':
+          order = [['GiaBan', 'ASC']];
+          break;
+        case 'price_desc':
+          order = [['GiaBan', 'DESC']];
+          break;
+        default:
+          order = [['MaSP', 'DESC']];
+      }
+
+      // Sử dụng ORM với include và attributes
+      const { rows: products, count: totalItems } = await SanPham.findAndCountAll({
+        attributes: [
+          'MaSP', 'TenSP', 'MoTaDai', 'GiaBan', 'SoLuongTon', 'HinhAnhChinhURL',
+          'MaDanhMuc', 'DacDiemNoiBat', 'LuotXem', 'NgayTao', 'NgayCapNhat',
+          [
+            literal(`(
+              SELECT AVG(CAST(DiemSo AS FLOAT))
+              FROM DanhGia
+              WHERE DanhGia.MaSP = SanPham.MaSP AND DanhGia.TrangThai = 1
+            )`),
+            'DiemDanhGiaTrungBinh'
+          ],
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM DanhGia
+              WHERE DanhGia.MaSP = SanPham.MaSP AND DanhGia.TrangThai = 1
+            )`),
+            'SoLuongDanhGia'
+          ]
+        ],
+        include: [
+          {
+            model: DanhMuc,
+            attributes: ['MaDanhMuc', 'TenDanhMuc']
+          }
+        ],
+        order,
+        limit,
+        offset,
+        distinct: true
+      });
+
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        products,
+        pagination: {
+          totalItems,
+          totalPages,
+          currentPage: page,
+          itemsPerPage: limit,
+          nextPage: page < totalPages ? page + 1 : null,
+          prevPage: page > 1 ? page - 1 : null
+        }
+      };
+    } catch (error) {
+      logger.error(`Error in getProductsWithReviews service: ${error}`);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Đã xảy ra lỗi khi lấy danh sách sản phẩm với đánh giá.', 500);
+    }
+  }
+
+  /**
    * Lấy thông tin chi tiết sản phẩm theo ID
    */
   async getProductById(productId: number) {
@@ -119,12 +204,10 @@ class ProductService {
         include: [
           {
             model: DanhMuc,
-            as: 'DanhMuc',
             attributes: ['MaDanhMuc', 'TenDanhMuc']
           },
           {
             model: DanhGia,
-            as: 'DanhGias',
             attributes: ['MaDanhGia', 'MaKH', 'DiemSo', 'BinhLuan', 'NgayDanhGia']
           }
         ]
@@ -134,9 +217,9 @@ class ProductService {
         throw new AppError('Không tìm thấy sản phẩm.', 404);
       }
 
-      // Tăng lượt xem
+      // Tăng lượt xem sử dụng literal cho cập nhật số lượng an toàn
       await product.update({ 
-        LuotXem: (product.LuotXem || 0) + 1 
+        LuotXem: literal('LuotXem + 1') 
       });
 
       return product;
@@ -144,6 +227,43 @@ class ProductService {
       logger.error(`Error in getProductById service: ${error}`);
       if (error instanceof AppError) throw error;
       throw new AppError('Đã xảy ra lỗi khi lấy thông tin sản phẩm.', 500);
+    }
+  }
+
+  /**
+   * Lấy sản phẩm bán chạy sử dụng ORM
+   */
+  async getBestSellingProducts(limit: number = 10) {
+    try {
+      const bestSellingProducts = await SanPham.findAll({
+        attributes: [
+          'MaSP', 'TenSP', 'GiaBan', 'HinhAnhChinhURL', 'MaDanhMuc',
+          [
+            literal(`(
+              SELECT SUM(ChiTietDonHang.SoLuong)
+              FROM ChiTietDonHang
+              JOIN DonHang ON ChiTietDonHang.MaDonHang = DonHang.MaDonHang
+              WHERE ChiTietDonHang.MaSP = SanPham.MaSP
+              AND DonHang.TrangThaiDonHang NOT IN ('Đã hủy', 'Trả hàng')
+            )`),
+            'TongSoLuongBan'
+          ]
+        ],
+        include: [
+          {
+            model: DanhMuc,
+            attributes: ['MaDanhMuc', 'TenDanhMuc']
+          }
+        ],
+        order: [[literal('TongSoLuongBan'), 'DESC']],
+        limit
+      });
+
+      return bestSellingProducts;
+    } catch (error) {
+      logger.error(`Error in getBestSellingProducts service: ${error}`);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Đã xảy ra lỗi khi lấy sản phẩm bán chạy.', 500);
     }
   }
 
@@ -157,6 +277,7 @@ class ProductService {
     SoLuongTon: number;
     HinhAnhChinhURL: string;
     MaDanhMuc: number;
+    DacDiemNoiBat?: string;
   }) {
     try {
       // Kiểm tra tồn tại của danh mục
@@ -191,6 +312,7 @@ class ProductService {
     SoLuongTon?: number;
     HinhAnhChinhURL?: string;
     MaDanhMuc?: number;
+    DacDiemNoiBat?: string;
   }) {
     try {
       // Kiểm tra tồn tại của sản phẩm

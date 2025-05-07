@@ -10,6 +10,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Để gửi cookie CSRF và JWT
+  timeout: 10000,
 });
 
 // Thêm interceptor để xử lý token trong header khi gửi request
@@ -22,6 +23,15 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Interceptor xử lý lỗi
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // API Authentication
@@ -92,74 +102,176 @@ export const authAPI = {
   },
 };
 
-// API Sản phẩm (khi backend triển khai API này)
+// API Sản phẩm
 export const productAPI = {
-  getProducts: async (filters?: any) => {
+  getProducts: async (params = {}) => {
     try {
-      const response = await api.get('/products', { params: filters });
+      const response = await api.get('/san-pham', { params });
       return response.data;
     } catch (error) {
-      console.error('Get products error:', error);
+      console.error('Error fetching products:', error);
+      return {
+        status: 'error',
+        message: 'Không thể tải danh sách sản phẩm',
+      };
+    }
+  },
+
+  getBestSellingProducts: async (limit = 10) => {
+    try {
+      const response = await api.get('/san-pham/ban-chay', { 
+        params: { limit } 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching best selling products:', error);
+      return {
+        status: 'error',
+        message: 'Không thể tải sản phẩm bán chạy',
+      };
+    }
+  },
+
+  getProductById: async (productId: number) => {
+    try {
+      const response = await api.get(`/san-pham/${productId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      return {
+        status: 'error',
+        message: 'Không thể tải thông tin sản phẩm',
+      };
+    }
+  },
+
+  createProduct: async (productData: FormData) => {
+    try {
+      const response = await api.post('/san-pham', productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Create product error:', error);
       throw error;
     }
   },
 
-  getProductById: async (id: string) => {
+  updateProduct: async (id: string, productData: FormData) => {
     try {
-      const response = await api.get(`/products/${id}`);
+      const response = await api.put(`/san-pham/${id}`, productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
-      console.error(`Get product ${id} error:`, error);
+      console.error(`Update product ${id} error:`, error);
       throw error;
     }
   },
 
-  // Thêm API để lấy mock data từ backend
-  getMockProducts: async () => {
+  deleteProduct: async (id: string) => {
     try {
-      const response = await api.get('/mock/products');
+      const response = await api.delete(`/san-pham/${id}`);
       return response.data;
     } catch (error) {
-      console.error('Get mock products error:', error);
-      throw error;
-    }
-  },
-
-  getMockAdminProducts: async () => {
-    try {
-      const response = await api.get('/mock/admin-products');
-      return response.data;
-    } catch (error) {
-      console.error('Get mock admin products error:', error);
+      console.error(`Delete product ${id} error:`, error);
       throw error;
     }
   }
 };
 
-// API Dashboard (sử dụng mock data từ backend)
+// API Danh mục
+export const categoryAPI = {
+  getCategories: async () => {
+    try {
+      const response = await api.get('/danh-muc');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return {
+        status: 'error',
+        message: 'Không thể tải danh sách danh mục',
+      };
+    }
+  },
+
+  getCategoryById: async (id: string) => {
+    try {
+      const response = await api.get(`/danh-muc/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Get category ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  createCategory: async (categoryData: FormData) => {
+    try {
+      const response = await api.post('/danh-muc', categoryData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Create category error:', error);
+      throw error;
+    }
+  },
+
+  updateCategory: async (id: string, categoryData: FormData) => {
+    try {
+      const response = await api.put(`/danh-muc/${id}`, categoryData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Update category ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  deleteCategory: async (id: string) => {
+    try {
+      const response = await api.delete(`/danh-muc/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Delete category ${id} error:`, error);
+      throw error;
+    }
+  }
+};
+
+// API Dashboard
 export const dashboardAPI = {
-  getMockDashboardData: async () => {
+  getDashboardData: async () => {
     try {
-      const response = await api.get('/mock/dashboard');
+      const response = await api.get('/admin/dashboard-stats');
       return response.data;
     } catch (error) {
-      console.error('Get mock dashboard data error:', error);
+      console.error('Get dashboard data error:', error);
       throw error;
     }
   },
 
-  getMockSellerDashboardData: async () => {
+  getSellerDashboardData: async () => {
     try {
-      const response = await api.get('/mock/seller-dashboard');
+      const response = await api.get('/nhan-vien/dashboard-stats');
       return response.data;
     } catch (error) {
-      console.error('Get mock seller dashboard data error:', error);
+      console.error('Get seller dashboard data error:', error);
       throw error;
     }
   }
 };
 
-// API Giỏ hàng (khi backend triển khai API này)
+// API Giỏ hàng
 export const cartAPI = {
   getCart: async () => {
     try {
@@ -215,7 +327,7 @@ export const orderAPI = {
     digitalWallet?: 'momo' | 'zalopay' | 'vnpay';
   }) => {
     try {
-      const response = await api.post('/orders', orderData);
+      const response = await api.post('/don-hang', orderData);
       return response.data;
     } catch (error) {
       console.error('Create order error:', error);
@@ -223,9 +335,9 @@ export const orderAPI = {
     }
   },
 
-  getOrders: async () => {
+  getOrders: async (queryParams?: any) => {
     try {
-      const response = await api.get('/orders');
+      const response = await api.get('/don-hang', { params: queryParams });
       return response.data;
     } catch (error) {
       console.error('Get orders error:', error);
@@ -235,7 +347,7 @@ export const orderAPI = {
 
   getOrderById: async (id: string) => {
     try {
-      const response = await api.get(`/orders/${id}`);
+      const response = await api.get(`/don-hang/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Get order ${id} error:`, error);
@@ -243,60 +355,164 @@ export const orderAPI = {
     }
   },
 
-  cancelOrder: async (id: string) => {
+  updateOrderStatus: async (id: string, data: { status: string, adminNote?: string }) => {
     try {
-      const response = await api.put(`/orders/${id}/cancel`);
+      const response = await api.patch(`/don-hang/${id}`, data);
       return response.data;
     } catch (error) {
-      console.error(`Cancel order ${id} error:`, error);
-      throw error;
-    }
-  },
-
-  // Thêm API để lấy mock order data từ backend
-  getMockOrders: async () => {
-    try {
-      const response = await api.get('/mock/orders');
-      return response.data;
-    } catch (error) {
-      console.error('Get mock orders error:', error);
+      console.error(`Update order ${id} error:`, error);
       throw error;
     }
   }
 };
 
-// API Thanh toán
-export const paymentAPI = {
-  // Khởi tạo thanh toán qua ví điện tử
-  initiateDigitalWalletPayment: async (
-    orderId: string, 
-    wallet: 'momo' | 'zalopay' | 'vnpay',
-    returnUrl: string
-  ) => {
+// API Đánh giá
+export const reviewAPI = {
+  getProductReviews: async (productId: string) => {
     try {
-      const response = await api.post(`/payments/digital-wallet`, {
-        orderId,
-        wallet,
-        returnUrl
-      });
+      const response = await api.get(`/danh-gia`, { params: { productId } });
       return response.data;
     } catch (error) {
-      console.error('Digital wallet payment initiation error:', error);
+      console.error(`Get reviews for product ${productId} error:`, error);
       throw error;
     }
   },
 
-  // Kiểm tra trạng thái thanh toán
-  checkPaymentStatus: async (orderId: string) => {
+  createReview: async (reviewData: {
+    productId: string;
+    rating: number;
+    comment: string;
+  }) => {
     try {
-      const response = await api.get(`/payments/status/${orderId}`);
+      const response = await api.post('/danh-gia', reviewData);
       return response.data;
     } catch (error) {
-      console.error(`Check payment status for order ${orderId} error:`, error);
+      console.error('Create review error:', error);
       throw error;
     }
   },
+
+  updateReview: async (id: string, data: { rating?: number; comment?: string }) => {
+    try {
+      const response = await api.put(`/danh-gia/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Update review ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  deleteReview: async (id: string) => {
+    try {
+      const response = await api.delete(`/danh-gia/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Delete review ${id} error:`, error);
+      throw error;
+    }
+  }
 };
 
-// Xuất các API khác khi cần
+// API Khách hàng (Admin only)
+export const customerAPI = {
+  getCustomers: async (queryParams?: any) => {
+    try {
+      const response = await api.get('/khach-hang', { params: queryParams });
+      return response.data;
+    } catch (error) {
+      console.error('Get customers error:', error);
+      throw error;
+    }
+  },
+
+  getCustomerById: async (id: string) => {
+    try {
+      const response = await api.get(`/khach-hang/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Get customer ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  updateCustomer: async (id: string, data: any) => {
+    try {
+      const response = await api.put(`/khach-hang/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Update customer ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  deactivateCustomer: async (id: string) => {
+    try {
+      const response = await api.post(`/khach-hang/${id}/deactivate`);
+      return response.data;
+    } catch (error) {
+      console.error(`Deactivate customer ${id} error:`, error);
+      throw error;
+    }
+  }
+};
+
+// API Nhân viên (Admin only)
+export const staffAPI = {
+  getStaff: async (queryParams?: any) => {
+    try {
+      const response = await api.get('/nhan-vien', { params: queryParams });
+      return response.data;
+    } catch (error) {
+      console.error('Get staff error:', error);
+      throw error;
+    }
+  },
+
+  getStaffById: async (id: string) => {
+    try {
+      const response = await api.get(`/nhan-vien/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Get staff ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  createStaff: async (staffData: {
+    email: string;
+    password: string;
+    fullName: string;
+    phoneNumber: string;
+    role: string;
+  }) => {
+    try {
+      const response = await api.post('/nhan-vien', staffData);
+      return response.data;
+    } catch (error) {
+      console.error('Create staff error:', error);
+      throw error;
+    }
+  },
+
+  updateStaff: async (id: string, data: any) => {
+    try {
+      const response = await api.put(`/nhan-vien/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Update staff ${id} error:`, error);
+      throw error;
+    }
+  },
+
+  deactivateStaff: async (id: string) => {
+    try {
+      const response = await api.post(`/nhan-vien/${id}/deactivate`);
+      return response.data;
+    } catch (error) {
+      console.error(`Deactivate staff ${id} error:`, error);
+      throw error;
+    }
+  }
+};
+
 export default api; 

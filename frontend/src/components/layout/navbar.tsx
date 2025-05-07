@@ -50,6 +50,16 @@ export default function Navbar() {
   const displayName = () => {
     if (!user) return '';
     
+    // Xử lý trường hợp fullName không tồn tại
+    if (!user.fullName) {
+      // Lấy tên từ email nếu có
+      if (user.email) {
+        const emailName = user.email.split('@')[0];
+        return emailName;
+      }
+      return 'User';
+    }
+    
     const names = user.fullName.split(' ');
     if (names.length > 1) {
       return names[names.length - 1]; // Lấy tên cuối cùng

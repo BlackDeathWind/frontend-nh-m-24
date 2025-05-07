@@ -15,7 +15,8 @@ const ProductController = {
         maxPrice,
         sortBy,
         page,
-        limit 
+        limit,
+        withReviews 
       } = req.query;
 
       // Tiền xử lý dữ liệu đầu vào
@@ -29,7 +30,18 @@ const ProductController = {
         limit: limit ? Number(limit) : 10
       };
 
-      const result = await productService.getProducts(options);
+      // Quyết định lấy dữ liệu với đánh giá hay không
+      let result;
+      if (withReviews === 'true') {
+        result = await productService.getProductsWithReviews({
+          page: options.page,
+          limit: options.limit,
+          sortBy: sortBy as string
+        });
+      } else {
+        result = await productService.getProducts(options);
+      }
+      
       return successResponse(res, result, 'Lấy danh sách sản phẩm thành công.');
     } catch (error) {
       next(error);
@@ -128,6 +140,23 @@ const ProductController = {
 
       await productService.deleteProduct(productId);
       return successResponse(res, null, 'Xóa sản phẩm thành công.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Lấy sản phẩm bán chạy
+  async getBestSellingProducts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { limit } = req.query;
+      const limitValue = limit ? Number(limit) : 10;
+      
+      if (isNaN(limitValue) || limitValue <= 0) {
+        return next(new AppError('Giới hạn phải là số dương.', 400));
+      }
+
+      const products = await productService.getBestSellingProducts(limitValue);
+      return successResponse(res, products, 'Lấy danh sách sản phẩm bán chạy thành công.');
     } catch (error) {
       next(error);
     }

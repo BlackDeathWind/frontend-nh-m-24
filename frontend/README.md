@@ -80,7 +80,6 @@ frontend/
 │   │
 │   ├── styles/                  # CSS và style
 │   ├── animations/              # Hiệu ứng chuyển động
-│   ├── mocks/                   # Dữ liệu mẫu
 │   ├── App.tsx                  # Component chính
 │   ├── main.tsx                 # Entry point
 │   └── index.css                # CSS toàn cục

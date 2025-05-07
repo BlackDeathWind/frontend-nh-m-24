@@ -84,9 +84,6 @@ backend/
 │   │   ├── responseHandler.ts   # Định dạng phản hồi API
 │   │   └── validator.ts         # Xác thực đầu vào
 │   │
-│   ├── mocks/                   # Dữ liệu mẫu
-│   │   └── data.ts              # Dữ liệu mẫu cho chế độ phát triển
-│   │
 │   └── index.ts                 # Entry point
 │
 ├── node_modules/                # Thư viện npm
@@ -193,18 +190,6 @@ Backend áp dụng nhiều lớp bảo mật:
    - Mật khẩu được hash với bcrypt
    - Validation độ mạnh của mật khẩu
 
-### Chế độ phát triển
-
-Backend hỗ trợ chế độ phát triển không cần kết nối đến cơ sở dữ liệu SQL Server và Redis:
-
-1. **Mock Services**: Các services giả lập dữ liệu trong bộ nhớ
-   - Cung cấp dữ liệu demo tương tự dữ liệu thực
-   - Cho phép thử nghiệm API mà không cần cơ sở dữ liệu
-
-2. **Development Flags**:
-   - `SKIP_DB`: Bỏ qua kết nối SQL Server
-   - `SKIP_REDIS`: Bỏ qua kết nối Redis
-
 ## Cài đặt
 
 ### Yêu cầu
@@ -247,32 +232,6 @@ Production build:
 npm run build
 npm start
 ```
-
-## Chế độ phát triển
-
-Ứng dụng này có hỗ trợ chế độ phát triển mà không cần cài đặt Redis hoặc SQL Server. Để kích hoạt chế độ này, hãy đảm bảo các biến môi trường sau được thiết lập trong file `.env`:
-
-```
-NODE_ENV=development
-SKIP_DB=true
-SKIP_REDIS=true
-```
-
-Trong chế độ này, hệ thống sẽ sử dụng dữ liệu mẫu và không thực hiện kết nối đến cơ sở dữ liệu hoặc Redis.
-
-## Tài khoản mẫu
-
-Trong chế độ phát triển, ứng dụng đã được cấu hình với các tài khoản mẫu sau:
-
-### Admin
-- **Email**: admin@example.com
-- **Password**: Admin123!
-- **Role**: admin
-
-### Seller
-- **Email**: seller@example.com
-- **Password**: Seller123!
-- **Role**: seller
 
 ## API Endpoints
 
@@ -326,7 +285,6 @@ Trong chế độ phát triển, ứng dụng đã được cấu hình với c�
 - CORS
 - Security headers
 - Helmet protection
-- Chế độ phát triển không yêu cầu DB hoặc Redis
 
 ## Quản lý Cache
 

@@ -55,4 +55,17 @@ export interface IDonHangUpdate {
   TrangThaiDonHang?: string;
   TrangThaiThanhToan?: string;
   GhiChuQuanTri?: string;
+}
+
+// Interface cho response đơn hàng với thông tin khách hàng
+export interface IDonHangWithCustomer extends IDonHang {
+  TenKhachHang: string;
+}
+
+// Interface cho response đơn hàng đầy đủ (bao gồm thông tin khách hàng và chi tiết)
+export interface IDonHangFull extends IDonHangWithCustomer {
+  ChiTietDonHang: (IChiTietDonHang & {
+    TenSP: string;
+    HinhAnhChinhURL: string;
+  })[];
 } 

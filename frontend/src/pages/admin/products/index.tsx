@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, Search, Edit, Trash2, Plus, ExternalLink, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { adminProducts } from '@/mocks/admin-products';
+import { getProducts } from '@/lib/data';
 
 interface Product {
   id: string;
@@ -14,9 +14,9 @@ interface Product {
   createdAt: string;
 }
 
-// Sử dụng data từ mocks/admin-products.ts
-
 export default function ProductsManagement() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -24,8 +24,26 @@ export default function ProductsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const response = await getProducts();
+        if (response.success && response.data) {
+          setProducts(response.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu sản phẩm:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
+
   // Lọc sản phẩm dựa trên các bộ lọc
-  const filteredProducts = adminProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === '' || product.category === selectedCategory;
     const matchesStatus = selectedStatus === '' || product.status === selectedStatus;
@@ -52,7 +70,7 @@ export default function ProductsManagement() {
   const currentItems = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
 
   // Danh sách các danh mục độc đáo từ sản phẩm
-  const categories = [...new Set(adminProducts.map(product => product.category))];
+  const categories = [...new Set(products.map(product => product.category))];
 
   const formatCurrency = (price: number) => {
     return new Intl.NumberFormat('vi-VN', { 
@@ -62,12 +80,21 @@ export default function ProductsManagement() {
     }).format(price);
   };
 
-  // Xử lý xóa sản phẩm (giả lập)
+  // Xử lý xóa sản phẩm
   const handleDeleteProduct = (productId: string) => {
     // Thực tế sẽ gọi API để xóa sản phẩm
     console.log(`Xóa sản phẩm có ID: ${productId}`);
     // Sau đó cập nhật lại danh sách sản phẩm
   };
+
+  // Nếu đang tải dữ liệu, hiển thị trạng thái loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -248,8 +275,8 @@ export default function ProductsManagement() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-between items-center mt-6">
-            <div className="text-sm text-gray-500">
-              Hiển thị {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, sortedProducts.length)} trong số {sortedProducts.length} sản phẩm
+            <div className="text-sm text-gray-700">
+              Hiển thị <span className="font-medium">{indexOfFirstItem + 1}</span> đến <span className="font-medium">{Math.min(indexOfLastItem, filteredProducts.length)}</span> trong số <span className="font-medium">{filteredProducts.length}</span> sản phẩm
             </div>
             <div className="flex space-x-1">
               <button
@@ -257,37 +284,52 @@ export default function ProductsManagement() {
                 disabled={currentPage === 1}
                 className={cn(
                   "px-3 py-1 rounded-md text-sm",
-                  currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+                  currentPage === 1 
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 )}
               >
                 Trước
               </button>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={cn(
-                    "px-3 py-1 rounded-md text-sm",
-                    currentPage === page
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
-                  )}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                // Hiển thị 5 nút phân trang xung quanh trang hiện tại
+                let pageNum = currentPage;
+                if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                if (pageNum > 0 && pageNum <= totalPages) {
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "px-3 py-1 rounded-md text-sm",
+                        currentPage === pageNum
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                }
+                return null;
+              })}
               
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className={cn(
                   "px-3 py-1 rounded-md text-sm",
-                  currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+                  currentPage === totalPages 
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 )}
               >
                 Tiếp

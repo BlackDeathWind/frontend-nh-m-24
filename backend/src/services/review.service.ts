@@ -1,11 +1,13 @@
 import { DanhGia, KhachHang, SanPham } from '../models';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../utils/logger';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
+import { sequelize } from '../config/database';
+import { IDanhGiaWithDetails } from '../interfaces/review.interface';
 
 class ReviewService {
   /**
-   * Lấy danh sách đánh giá của sản phẩm
+   * Lấy danh sách đánh giá của sản phẩm sử dụng ORM
    */
   async getProductReviews(productId: number) {
     try {
@@ -15,28 +17,42 @@ class ReviewService {
         throw new AppError('Không tìm thấy sản phẩm.', 404);
       }
 
-      // Lấy đánh giá
-      const reviews = await DanhGia.findAll({
-        where: { MaSP: productId, TrangThai: true },
-        include: [
-          {
-            model: KhachHang,
-            as: 'KhachHang',
-            attributes: ['MaKH', 'HoTen']
-          }
-        ],
+      // Sử dụng ORM để lấy dữ liệu
+      const danhGiaItems = await DanhGia.findAll({
+        where: {
+          MaSP: productId,
+          TrangThai: true
+        },
         order: [['NgayDanhGia', 'DESC']]
       });
 
+      // Lấy thông tin khách hàng
+      const reviews = await Promise.all(danhGiaItems.map(async (danhGia) => {
+        const khachHang = await KhachHang.findByPk(danhGia.MaKH, {
+          attributes: ['MaKH', 'HoTen']
+        });
+        
+        return {
+          MaDanhGia: danhGia.MaDanhGia,
+          MaSP: danhGia.MaSP,
+          MaKH: danhGia.MaKH,
+          TenKhachHang: khachHang ? khachHang.HoTen : '',
+          DiemSo: danhGia.DiemSo,
+          BinhLuan: danhGia.BinhLuan,
+          NgayDanhGia: danhGia.NgayDanhGia,
+          TrangThai: danhGia.TrangThai
+        };
+      }));
+
       // Tính điểm trung bình
-      const avgRating = reviews.length > 0
-        ? reviews.reduce((sum, review) => sum + review.DiemSo, 0) / reviews.length
+      const avgRating = danhGiaItems.length > 0
+        ? danhGiaItems.reduce((sum, review) => sum + review.DiemSo, 0) / danhGiaItems.length
         : 0;
 
       return {
         reviews,
         averageRating: avgRating,
-        totalReviews: reviews.length
+        totalReviews: danhGiaItems.length
       };
     } catch (error) {
       logger.error(`Error in getProductReviews service: ${error}`);
@@ -46,34 +62,122 @@ class ReviewService {
   }
 
   /**
-   * Lấy chi tiết đánh giá theo ID
+   * Lấy chi tiết đánh giá theo ID sử dụng ORM
    */
   async getReviewById(reviewId: number) {
     try {
-      const review = await DanhGia.findByPk(reviewId, {
-        include: [
-          {
-            model: KhachHang,
-            as: 'KhachHang',
-            attributes: ['MaKH', 'HoTen']
-          },
-          {
-            model: SanPham,
-            as: 'SanPham',
-            attributes: ['MaSP', 'TenSP']
-          }
-        ]
-      });
-
-      if (!review) {
+      const danhGia = await DanhGia.findByPk(reviewId);
+      
+      if (!danhGia) {
         throw new AppError('Không tìm thấy đánh giá.', 404);
       }
-
-      return review;
+      
+      // Lấy thêm thông tin sản phẩm và khách hàng
+      const khachHang = await KhachHang.findByPk(danhGia.MaKH, {
+        attributes: ['MaKH', 'HoTen']
+      });
+      
+      const sanPham = await SanPham.findByPk(danhGia.MaSP, {
+        attributes: ['MaSP', 'TenSP']
+      });
+      
+      return {
+        MaDanhGia: danhGia.MaDanhGia,
+        MaSP: danhGia.MaSP,
+        TenSP: sanPham ? sanPham.TenSP : '',
+        MaKH: danhGia.MaKH,
+        TenKhachHang: khachHang ? khachHang.HoTen : '',
+        DiemSo: danhGia.DiemSo,
+        BinhLuan: danhGia.BinhLuan,
+        NgayDanhGia: danhGia.NgayDanhGia,
+        TrangThai: danhGia.TrangThai
+      };
     } catch (error) {
       logger.error(`Error in getReviewById service: ${error}`);
       if (error instanceof AppError) throw error;
       throw new AppError('Đã xảy ra lỗi khi lấy thông tin đánh giá.', 500);
+    }
+  }
+
+  /**
+   * Lấy tất cả đánh giá với phân trang và lọc sử dụng ORM
+   */
+  async getAllReviews(options: {
+    productId?: number;
+    customerId?: string;
+    rating?: number;
+    page?: number;
+    limit?: number;
+  }) {
+    try {
+      const { productId, customerId, rating, page = 1, limit = 10 } = options;
+      
+      // Xây dựng điều kiện tìm kiếm
+      const whereClause: any = {};
+      
+      if (productId) {
+        whereClause.MaSP = productId;
+      }
+      
+      if (customerId) {
+        whereClause.MaKH = customerId;
+      }
+      
+      if (rating) {
+        whereClause.DiemSo = rating;
+      }
+      
+      const offset = (page - 1) * limit;
+      
+      // Sử dụng ORM để lấy dữ liệu với phân trang
+      const { rows: danhGiaItems, count: totalItems } = await DanhGia.findAndCountAll({
+        where: whereClause,
+        order: [['NgayDanhGia', 'DESC']],
+        limit,
+        offset,
+        distinct: true
+      });
+      
+      // Xử lý kết quả để bổ sung thông tin khách hàng và sản phẩm
+      const reviews = await Promise.all(danhGiaItems.map(async (danhGia) => {
+        const khachHang = await KhachHang.findByPk(danhGia.MaKH, {
+          attributes: ['MaKH', 'HoTen']
+        });
+        
+        const sanPham = await SanPham.findByPk(danhGia.MaSP, {
+          attributes: ['MaSP', 'TenSP']
+        });
+        
+        return {
+          MaDanhGia: danhGia.MaDanhGia,
+          MaSP: danhGia.MaSP,
+          TenSP: sanPham ? sanPham.TenSP : '',
+          MaKH: danhGia.MaKH,
+          TenKhachHang: khachHang ? khachHang.HoTen : '',
+          DiemSo: danhGia.DiemSo,
+          BinhLuan: danhGia.BinhLuan,
+          NgayDanhGia: danhGia.NgayDanhGia,
+          TrangThai: danhGia.TrangThai
+        };
+      }));
+      
+      const totalPages = Math.ceil(totalItems / limit);
+      
+      return {
+        reviews,
+        pagination: {
+          totalItems,
+          totalPages,
+          currentPage: page,
+          itemsPerPage: limit,
+          nextPage: page < totalPages ? page + 1 : null,
+          prevPage: page > 1 ? page - 1 : null
+        }
+      };
+    } catch (error) {
+      logger.error(`Error in getAllReviews service: ${error}`);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Đã xảy ra lỗi khi lấy danh sách đánh giá.', 500);
     }
   }
 
@@ -123,7 +227,8 @@ class ReviewService {
         TrangThai: true
       });
 
-      return newReview;
+      // Lấy chi tiết đánh giá đã tạo bằng view
+      return this.getReviewById(newReview.MaDanhGia);
     } catch (error) {
       logger.error(`Error in createReview service: ${error}`);
       if (error instanceof AppError) throw error;
@@ -162,7 +267,8 @@ class ReviewService {
         NgayDanhGia: new Date() // Cập nhật ngày đánh giá
       });
 
-      return review;
+      // Lấy chi tiết đánh giá đã cập nhật bằng view
+      return this.getReviewById(reviewId);
     } catch (error) {
       logger.error(`Error in updateReview service: ${error}`);
       if (error instanceof AppError) throw error;
@@ -171,7 +277,7 @@ class ReviewService {
   }
 
   /**
-   * Xóa đánh giá
+   * Xóa đánh giá (ẩn đánh giá)
    */
   async deleteReview(reviewId: number, userId: string, isAdmin: boolean) {
     try {
@@ -186,10 +292,12 @@ class ReviewService {
         throw new AppError('Bạn không có quyền xóa đánh giá này.', 403);
       }
 
-      // Xóa đánh giá
-      await review.destroy();
+      // Ẩn đánh giá thay vì xóa hẳn khỏi database
+      await review.update({
+        TrangThai: false
+      });
 
-      return { success: true };
+      return { success: true, message: 'Đã ẩn đánh giá thành công.' };
     } catch (error) {
       logger.error(`Error in deleteReview service: ${error}`);
       if (error instanceof AppError) throw error;

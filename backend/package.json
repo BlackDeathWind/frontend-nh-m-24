@@ -1,7 +1,7 @@
 {
   "name": "ecommerce-backend",
   "version": "1.0.0",
-  "description": "E-commerce backend API with Express, WebSocket and SQL Server",
+  "description": "Modern Stationery Store backend API with Express, WebSocket and SQL Server",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

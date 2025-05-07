@@ -30,8 +30,8 @@ app.use(cookieParser());
 // Phục vụ favicon.ico và các tệp tĩnh khác
 app.use(express.static(path.join(__dirname, '..')));
 
-// Trong môi trường phát triển, bỏ qua Redis và session middleware
-if (process.env.NODE_ENV === 'development' && process.env.SKIP_REDIS === 'true') {
+// Khởi tạo session middleware nếu không bỏ qua Redis
+if (process.env.SKIP_REDIS === 'true') {
   logger.info('Đang chạy ở chế độ phát triển mà không có Redis');
 } else {
   try {
@@ -98,7 +98,7 @@ app.get('/', (req: Request, res: Response) => {
             background: #4CAF50;
             color: white;
           }
-          .put {
+          .put, .patch {
             background: #FF9800;
             color: white;
           }
@@ -142,7 +142,7 @@ app.get('/', (req: Request, res: Response) => {
           
           <h3>Tài khoản mẫu (Chế độ phát triển)</h3>
           <p><strong>Admin:</strong> email: admin@example.com | password: Admin123!</p>
-          <p><strong>Seller:</strong> email: seller@example.com | password: Seller123!</p>
+          <p><strong>Nhân viên:</strong> email: seller@example.com | password: Seller123!</p>
         </div>
         
         <h2>API Endpoints</h2>
@@ -152,33 +152,33 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/khachhangs/register</span> - Đăng ký khách hàng mới
+              <span>/api/khach-hang/register</span> - Đăng ký khách hàng mới
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/khachhangs/login</span> - Đăng nhập
+              <span>/api/khach-hang/login</span> - Đăng nhập
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/khachhangs/profile</span> - Lấy thông tin cá nhân
+              <span>/api/khach-hang/profile</span> - Lấy thông tin cá nhân
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/khachhangs/:id</span> - Cập nhật thông tin khách hàng
+              <span>/api/khach-hang/:id</span> - Cập nhật thông tin khách hàng
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/khachhangs</span> - Lấy danh sách khách hàng
+              <span>/api/khach-hang</span> - Lấy danh sách khách hàng
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/khachhangs/:id</span> - Lấy thông tin chi tiết khách hàng
+              <span>/api/khach-hang/:id</span> - Lấy thông tin chi tiết khách hàng
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/khachhangs/:id/deactivate</span> - Vô hiệu hóa khách hàng
+              <span>/api/khach-hang/:id/deactivate</span> - Vô hiệu hóa khách hàng
               <span class="role">admin</span>
             </div>
           </div>
@@ -189,27 +189,27 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/nhanviens</span> - Lấy danh sách nhân viên
+              <span>/api/nhan-vien</span> - Lấy danh sách nhân viên
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/nhanviens/:id</span> - Lấy thông tin chi tiết nhân viên
+              <span>/api/nhan-vien/:id</span> - Lấy thông tin chi tiết nhân viên
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/nhanviens</span> - Tạo nhân viên mới
+              <span>/api/nhan-vien</span> - Tạo nhân viên mới
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/nhanviens/:id</span> - Cập nhật thông tin nhân viên
+              <span>/api/nhan-vien/:id</span> - Cập nhật thông tin nhân viên
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/nhanviens/:id/deactivate</span> - Vô hiệu hóa nhân viên
+              <span>/api/nhan-vien/:id/deactivate</span> - Vô hiệu hóa nhân viên
               <span class="role">admin</span>
             </div>
           </div>
@@ -220,29 +220,32 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/products</span> - Lấy danh sách sản phẩm
+              <span>/api/san-pham</span> - Lấy danh sách sản phẩm
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/products/:id</span> - Lấy thông tin chi tiết sản phẩm
+              <span>/api/san-pham/ban-chay</span> - Lấy danh sách sản phẩm bán chạy
+            </div>
+            <div class="endpoint">
+              <span class="method get">GET</span>
+              <span>/api/san-pham/:id</span> - Lấy thông tin chi tiết sản phẩm
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/products</span> - Tạo sản phẩm mới
+              <span>/api/san-pham</span> - Tạo sản phẩm mới
               <span class="role">admin</span>
-              <span class="role">seller</span>
+              <span class="role">nhân viên</span>
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/products/:id</span> - Cập nhật sản phẩm
+              <span>/api/san-pham/:id</span> - Cập nhật sản phẩm
               <span class="role">admin</span>
-              <span class="role">seller</span>
+              <span class="role">nhân viên</span>
             </div>
             <div class="endpoint">
               <span class="method delete">DELETE</span>
-              <span>/api/products/:id</span> - Xóa sản phẩm
+              <span>/api/san-pham/:id</span> - Xóa sản phẩm
               <span class="role">admin</span>
-              <span class="role">seller</span>
             </div>
           </div>
         </div>
@@ -252,25 +255,25 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/categories</span> - Lấy danh sách danh mục
+              <span>/api/danh-muc</span> - Lấy danh sách danh mục
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/categories/:id</span> - Lấy thông tin chi tiết danh mục
+              <span>/api/danh-muc/:id</span> - Lấy thông tin chi tiết danh mục
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/categories</span> - Tạo danh mục mới
+              <span>/api/danh-muc</span> - Tạo danh mục mới
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/categories/:id</span> - Cập nhật danh mục
+              <span>/api/danh-muc/:id</span> - Cập nhật danh mục
               <span class="role">admin</span>
             </div>
             <div class="endpoint">
               <span class="method delete">DELETE</span>
-              <span>/api/categories/:id</span> - Xóa danh mục
+              <span>/api/danh-muc/:id</span> - Xóa danh mục
               <span class="role">admin</span>
             </div>
           </div>
@@ -281,24 +284,21 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/donhangs</span> - Lấy danh sách đơn hàng
+              <span>/api/don-hang</span> - Lấy danh sách đơn hàng
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/donhangs/:id</span> - Lấy thông tin chi tiết đơn hàng
+              <span>/api/don-hang/:id</span> - Lấy thông tin chi tiết đơn hàng
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/donhangs</span> - Tạo đơn hàng mới
+              <span>/api/don-hang</span> - Tạo đơn hàng mới
             </div>
             <div class="endpoint">
-              <span class="method put">PUT</span>
-              <span>/api/donhangs/:id</span> - Cập nhật trạng thái đơn hàng
+              <span class="method patch">PATCH</span>
+              <span>/api/don-hang/:id</span> - Cập nhật trạng thái đơn hàng
               <span class="role">admin</span>
-            </div>
-            <div class="endpoint">
-              <span class="method post">POST</span>
-              <span>/api/donhangs/:id/cancel</span> - Hủy đơn hàng
+              <span class="role">nhân viên</span>
             </div>
           </div>
         </div>
@@ -308,23 +308,23 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/reviews</span> - Lấy danh sách đánh giá
+              <span>/api/danh-gia</span> - Lấy danh sách đánh giá
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/reviews/:id</span> - Lấy thông tin chi tiết đánh giá
+              <span>/api/danh-gia/:id</span> - Lấy thông tin chi tiết đánh giá
             </div>
             <div class="endpoint">
               <span class="method post">POST</span>
-              <span>/api/reviews</span> - Tạo đánh giá mới
+              <span>/api/danh-gia</span> - Tạo đánh giá mới
             </div>
             <div class="endpoint">
               <span class="method put">PUT</span>
-              <span>/api/reviews/:id</span> - Cập nhật đánh giá
+              <span>/api/danh-gia/:id</span> - Cập nhật đánh giá
             </div>
             <div class="endpoint">
               <span class="method delete">DELETE</span>
-              <span>/api/reviews/:id</span> - Xóa đánh giá
+              <span>/api/danh-gia/:id</span> - Xóa đánh giá
               <span class="role">admin</span>
             </div>
           </div>
@@ -371,7 +371,7 @@ app.use(errorHandler);
 const server = createServer(app);
 
 // Khởi tạo Socket.IO server
-if (process.env.NODE_ENV === 'development' && process.env.SKIP_REDIS === 'true') {
+if (process.env.SKIP_REDIS === 'true') {
   logger.info('Bỏ qua việc khởi tạo Socket.IO server do không có Redis');
 } else {
   try {
@@ -385,33 +385,33 @@ if (process.env.NODE_ENV === 'development' && process.env.SKIP_REDIS === 'true')
 const startServer = async () => {
   try {
     // Kết nối Redis nếu không bỏ qua
-    if (process.env.NODE_ENV !== 'development' || process.env.SKIP_REDIS !== 'true') {
+    if (process.env.SKIP_REDIS !== 'true') {
       try {
         await connectRedis();
       } catch (error) {
         logger.warn('Không thể kết nối đến Redis, tiếp tục khởi động server');
       }
+    } else {
+      logger.info('Bỏ qua kết nối Redis trong chế độ phát triển');
     }
     
     // Kiểm tra kết nối đến cơ sở dữ liệu nếu không bỏ qua
     let dbConnected = false;
-    if (process.env.NODE_ENV !== 'development' || process.env.SKIP_DB !== 'true') {
+    if (true) { // Luôn yêu cầu kết nối đến cơ sở dữ liệu
       try {
         dbConnected = await testConnection();
         if (dbConnected) {
           logger.info('Sử dụng cơ sở dữ liệu SQL Server thật');
         } else {
-          logger.warn('Không thể kết nối đến cơ sở dữ liệu, tiếp tục khởi động server với mock data');
-          // Đặt SKIP_DB về true để sử dụng mock data
-          process.env.SKIP_DB = 'true';
+          logger.error('Không thể kết nối đến cơ sở dữ liệu, không thể khởi động server.');
+          process.exit(1);
         }
       } catch (error) {
-        logger.warn('Lỗi khi kết nối đến cơ sở dữ liệu, tiếp tục khởi động server với mock data');
-        // Đặt SKIP_DB về true để sử dụng mock data
-        process.env.SKIP_DB = 'true';
+        logger.error('Không thể kết nối đến cơ sở dữ liệu, không thể khởi động server.');
+        process.exit(1);
       }
     } else {
-      logger.info('Đang chạy ở chế độ phát triển mà không kết nối đến cơ sở dữ liệu (sử dụng mock data)');
+      throw new Error('Phải kết nối đến cơ sở dữ liệu để khởi động server');
     }
     
     // Khởi động server
@@ -420,7 +420,8 @@ const startServer = async () => {
       if (dbConnected) {
         logger.info(`Sử dụng cơ sở dữ liệu SQL Server thật: ${config.DB.HOST}/${config.DB.NAME}`);
       } else {
-        logger.info('Sử dụng dữ liệu giả lập (mock data)');
+        logger.error('Không thể khởi động server nếu không kết nối được đến cơ sở dữ liệu');
+        process.exit(1);
       }
     });
   } catch (error) {

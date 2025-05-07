@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/lib/notification-context';
-import { orderAPI, paymentAPI } from '@/lib/api';
+import { orderAPI } from '@/lib/api';
 import { 
   ChevronLeft, 
-  CreditCard, 
   Truck, 
   Check, 
   AlertCircle, 
@@ -16,8 +15,6 @@ import {
   Phone, 
   FileText,
   Home,
-  Building,
-  Map,
   DollarSign,
   Edit,
   Wallet
@@ -156,21 +153,10 @@ export default function CheckoutPage() {
         
         // Nếu thanh toán qua ví điện tử, chuyển đến trang thanh toán
         if (formData.paymentMethod === 'digital' && formData.digitalWallet) {
-          const returnUrl = `${window.location.origin}/payment/callback`;
-          const paymentResponse = await paymentAPI.initiateDigitalWalletPayment(
-            orderId, 
-            formData.digitalWallet as DigitalWallet,
-            returnUrl
-          );
-          
-          if (paymentResponse.status === 'success' && paymentResponse.data.paymentUrl) {
-            // Lưu ID đơn hàng vào localStorage để kiểm tra sau này
-            localStorage.setItem('pendingOrderId', orderId);
-            // Chuyển đến trang thanh toán của ví điện tử
-            window.location.href = paymentResponse.data.paymentUrl;
-          } else {
-            throw new Error('Không thể khởi tạo thanh toán qua ví điện tử');
-          }
+          // TODO: Tính năng thanh toán sẽ được thêm trong tương lai
+          showNotification('info', 'Tính năng thanh toán điện tử sẽ được cập nhật trong tương lai');
+          clearCart();
+          navigate(`/orders/${orderId}`);
         } else {
           // Thanh toán COD - hiển thị thông báo thành công
           showNotification('success', 'Đặt hàng thành công! Cảm ơn bạn đã mua sắm');

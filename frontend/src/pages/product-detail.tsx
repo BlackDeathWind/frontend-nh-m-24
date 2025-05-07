@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Star, Minus, Plus, ShoppingCart, Heart, Share2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { products } from '@/lib/data';
+import { productAPI } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/lib/cart-context';
@@ -10,26 +10,160 @@ import { useCart } from '@/lib/cart-context';
 // Import styles
 import styles from '@/styles/product-detail.module.css';
 
+// Khai báo kiểu cho danh sách sản phẩm
+interface BackendProduct {
+  MaSP: number;
+  TenSP: string;
+  MoTaDai: string;
+  GiaBan: number;
+  SoLuongTon: number;
+  HinhAnhChinhURL: string;
+  MaDanhMuc: number;
+  DacDiemNoiBat?: string;
+  LuotXem: number;
+  NgayTao: string;
+  NgayCapNhat: string;
+  DiemDanhGiaTrungBinh?: number;
+  SoLuongDanhGia?: number;
+  DanhMuc?: {
+    MaDanhMuc: number;
+    TenDanhMuc: string;
+  };
+  DanhGia?: Array<{
+    MaDanhGia: number;
+    MaKH: number;
+    DiemSo: number;
+    BinhLuan: string;
+    NgayDanhGia: string;
+  }>;
+}
+
+// Hàm chuyển đổi từ cấu trúc backend sang cấu trúc Product trong frontend
+const mapBackendProductToFrontend = (backendProduct: BackendProduct): Product => {
+  // Xử lý trường đặc điểm nổi bật
+  let features: string[] = [];
+  if (backendProduct.DacDiemNoiBat) {
+    // Chuyển chuỗi đặc điểm nổi bật thành mảng, phân tách bởi dấu chấm phẩy
+    features = backendProduct.DacDiemNoiBat.split(';').map(feature => feature.trim()).filter(feature => feature !== '');
+  }
+
+  return {
+    id: backendProduct.MaSP.toString(),
+    name: backendProduct.TenSP,
+    price: Number(backendProduct.GiaBan),
+    description: backendProduct.MoTaDai,
+    category: backendProduct.DanhMuc?.TenDanhMuc || 'Chưa phân loại',
+    imageUrl: backendProduct.HinhAnhChinhURL,
+    stock: backendProduct.SoLuongTon,
+    rating: backendProduct.DiemDanhGiaTrungBinh || 0,
+    reviews: backendProduct.SoLuongDanhGia || backendProduct.DanhGia?.length || backendProduct.LuotXem || 0,
+    features: features,
+    comments: backendProduct.DanhGia?.map(review => ({
+      id: review.MaDanhGia.toString(),
+      userId: review.MaKH.toString(),
+      rating: review.DiemSo,
+      comment: review.BinhLuan,
+      date: new Date(review.NgayDanhGia)
+    })) || []
+  };
+};
+
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'specifications'>('description');
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { addItem } = useCart();
 
-  // Lấy sản phẩm theo id
+  // Lấy sản phẩm theo id từ API
   useEffect(() => {
-    const foundProduct = products.find(p => p.id === id);
-    if (foundProduct) {
-      setProduct(foundProduct);
-      setSelectedImage(foundProduct.imageUrl);
+    const fetchProductDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Lấy chi tiết sản phẩm theo ID
+        const productId = parseInt(id || '0', 10);
+        if (isNaN(productId) || productId <= 0) {
+          throw new Error('ID sản phẩm không hợp lệ');
+        }
+        
+        const response = await productAPI.getProductById(productId);
+        
+        if (response.status === 'success' && response.data) {
+          const backendProduct = response.data as BackendProduct;
+          const mappedProduct = mapBackendProductToFrontend(backendProduct);
+          setProduct(mappedProduct);
+          setSelectedImage(mappedProduct.imageUrl);
+          
+          // Sau khi có thông tin sản phẩm, lấy sản phẩm liên quan (cùng danh mục)
+          if (backendProduct.MaDanhMuc) {
+            await fetchRelatedProducts(backendProduct.MaDanhMuc, productId);
+          }
+        } else {
+          setError('Không thể tải thông tin sản phẩm');
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải chi tiết sản phẩm:', err);
+        setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi khi tải thông tin sản phẩm');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchRelatedProducts = async (categoryId: number, currentProductId: number) => {
+      try {
+        // Tạo tham số để lấy sản phẩm cùng danh mục, ngoại trừ sản phẩm hiện tại
+        const params = {
+          categoryId: categoryId.toString(),
+          withReviews: 'true',
+          limit: '4'
+        };
+        
+        const response = await productAPI.getProducts(params);
+        
+        if (response.status === 'success' && response.data) {
+          const backendProducts = response.data.products as BackendProduct[] || [];
+          const mappedProducts = backendProducts
+            .map(mapBackendProductToFrontend)
+            .filter(product => product.id !== currentProductId.toString())
+            .slice(0, 4);
+          
+          setRelatedProducts(mappedProducts);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải sản phẩm liên quan:', error);
+        // Không hiển thị lỗi cho người dùng khi không thể tải được sản phẩm liên quan
+      }
+    };
+
+    if (id) {
+      fetchProductDetails();
     }
   }, [id]);
 
-  if (!product) {
+  // Hiển thị trạng thái loading
+  if (loading) {
+    return (
+      <motion.div 
+        className={styles.loadingContainer}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className={styles.spinner}></div>
+        <p>Đang tải thông tin sản phẩm...</p>
+      </motion.div>
+    );
+  }
+
+  // Hiển thị thông báo lỗi
+  if (error || !product) {
     return (
       <motion.div 
         className={styles.errorContainer}
@@ -40,7 +174,7 @@ export default function ProductDetailPage() {
         <div className={styles.errorContent}>
           <h2 className={styles.errorTitle}>Không tìm thấy sản phẩm</h2>
           <p className={styles.errorMessage}>
-            Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+            {error || 'Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.'}
           </p>
           <motion.button
             onClick={() => navigate('/products')}
@@ -77,11 +211,6 @@ export default function ProductDetailPage() {
     }
   };
   
-  // Sản phẩm liên quan
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
-
   // Animation variants
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -345,7 +474,8 @@ export default function ProductDetailPage() {
                   <div>
                       <h3 className={styles.sectionTitle}>Đặc điểm nổi bật</h3>
                       <ul className={styles.featureList}>
-                      {product.features?.map((feature, index) => (
+                      {product.features?.length ? (
+                        product.features.map((feature, index) => (
                           <motion.li 
                             key={index} 
                             className={styles.featureItem}
@@ -356,7 +486,16 @@ export default function ProductDetailPage() {
                             <Check className={styles.featureIcon} />
                             <span className={styles.sectionText}>{feature}</span>
                           </motion.li>
-                      ))}
+                        ))
+                      ) : (
+                        <motion.li 
+                          className={styles.featureItem}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                        >
+                          <span className={styles.sectionText}>Chưa có thông tin đặc điểm nổi bật.</span>
+                        </motion.li>
+                      )}
                     </ul>
                   </div>
                   
@@ -370,7 +509,9 @@ export default function ProductDetailPage() {
                           </div>
                           <div className={styles.specRow}>
                             <span className={styles.specLabel}>Trạng thái</span>
-                            <span className={styles.specValueSuccess}>Còn hàng</span>
+                            <span className={product.stock > 0 ? styles.specValueSuccess : styles.specValueError}>
+                              {product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}
+                            </span>
                         </div>
                           <div className={styles.specRow}>
                             <span className={styles.specLabel}>Đánh giá</span>

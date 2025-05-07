@@ -23,12 +23,19 @@ redisClient.on('error', (err) => {
 // Hàm khởi động Redis client
 const connectRedis = async (): Promise<void> => {
   try {
-    await redisClient.connect();
+    // Đặt timeout cho kết nối Redis để tránh treo ứng dụng
+    const connectPromise = redisClient.connect();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Timeout kết nối Redis')), 5000); // 5 giây timeout
+    });
+    
+    await Promise.race([connectPromise, timeoutPromise]);
+    logger.info('Đã kết nối thành công với Redis');
   } catch (error) {
     logger.error(`Không thể kết nối đến Redis: ${error}`);
     // Không crash trong môi trường phát triển
     if (config.NODE_ENV === 'production') {
-      process.exit(1);
+      throw error; // Ném lỗi để caller xử lý
     }
   }
 };

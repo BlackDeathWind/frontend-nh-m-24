@@ -3,6 +3,14 @@ import { Bell, Menu, Search, User, Moon, Sun, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import api from '@/lib/api';
+
+interface Notification {
+  id: number;
+  message: string;
+  time: string;
+  read: boolean;
+}
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -15,31 +23,34 @@ export default function Header({ toggleSidebar, toggleTheme, isDarkMode }: Heade
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
   
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Mock notifications
-  const notifications = [
-    {
-      id: 1,
-      message: 'Có 5 đơn hàng mới cần xử lý',
-      time: '5 phút trước',
-      read: false,
-    },
-    {
-      id: 2,
-      message: 'Sản phẩm "Bút bi cao cấp" sắp hết hàng',
-      time: '1 giờ trước',
-      read: false,
-    },
-    {
-      id: 3,
-      message: 'Có đánh giá mới cho sản phẩm của bạn',
-      time: '3 giờ trước',
-      read: true,
-    },
-  ];
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        // Nếu API thông báo đã được triển khai, sử dụng đoạn code sau:
+        // const response = await api.get('/notifications');
+        // if (response.data.success) {
+        //   setNotifications(response.data.data);
+        // }
+        
+        // Sử dụng dữ liệu thực tế khi có API
+        // Tạm thời để rỗng cho đến khi API được triển khai
+        setNotifications([]);
+      } catch (error) {
+        console.error('Lỗi khi tải thông báo:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchNotifications();
+  }, []);
 
   // Handle outside click to close dropdowns
   useEffect(() => {
@@ -67,6 +78,19 @@ export default function Header({ toggleSidebar, toggleTheme, isDarkMode }: Heade
 
   const handleLogout = () => {
     logout();
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      // Khi API được triển khai:
+      // await api.put('/notifications/mark-all-read');
+      // Sau đó cập nhật danh sách thông báo
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => ({ ...notif, read: true }))
+      );
+    } catch (error) {
+      console.error('Lỗi khi đánh dấu đã đọc:', error);
+    }
   };
 
   const unreadNotifications = notifications.filter(notification => !notification.read).length;
@@ -122,12 +146,21 @@ export default function Header({ toggleSidebar, toggleTheme, isDarkMode }: Heade
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20 border border-gray-200">
               <div className="py-2 px-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                 <span className="font-medium text-gray-700">Thông báo</span>
-                <span className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
-                  Đánh dấu tất cả đã đọc
-                </span>
+                {notifications.length > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
+                  >
+                    Đánh dấu tất cả đã đọc
+                  </button>
+                )}
               </div>
               <div className="max-h-96 overflow-y-auto">
-                {notifications.length > 0 ? (
+                {loading ? (
+                  <div className="px-4 py-6 text-center">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : notifications.length > 0 ? (
                   <div>
                     {notifications.map((notification) => (
                       <div 
@@ -148,11 +181,13 @@ export default function Header({ toggleSidebar, toggleTheme, isDarkMode }: Heade
                   </div>
                 )}
               </div>
-              <div className="py-2 px-4 bg-gray-50 border-t border-gray-200 text-center">
-                <button className="text-sm text-blue-600 hover:text-blue-800">
-                  Xem tất cả thông báo
-                </button>
-              </div>
+              {notifications.length > 0 && (
+                <div className="py-2 px-4 bg-gray-50 border-t border-gray-200 text-center">
+                  <Link to="/notifications" className="text-sm text-blue-600 hover:text-blue-800">
+                    Xem tất cả thông báo
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>

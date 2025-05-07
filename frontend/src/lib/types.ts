@@ -9,6 +9,7 @@ export interface Product {
   rating: number;
   reviews: number;
   features?: string[];
+  comments?: ProductComment[];
 }
 
 export interface CartItem {
@@ -16,9 +17,17 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface ProductComment {
+  id: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  date: Date;
+}
+
 export interface FilterOptions {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
-  sortBy?: 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | 'rating-desc';
+  sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
 } 

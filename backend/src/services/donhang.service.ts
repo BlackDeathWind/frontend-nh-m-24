@@ -1,35 +1,82 @@
 import { DonHang, ChiTietDonHang, SanPham, KhachHang } from '../models';
-import { IDonHangCreate, IDonHangUpdate } from '../interfaces/order.interface';
+import { IDonHangCreate, IDonHangUpdate, IDonHangWithCustomer, IDonHangFull } from '../interfaces/order.interface';
 import { AppError } from '../middlewares/errorHandler';
 import { sequelize } from '../config/database';
 import logger from '../utils/logger';
+import { QueryTypes, literal } from 'sequelize';
 
 class DonHangService {
   /**
-   * Lấy danh sách đơn hàng với các điều kiện lọc
+   * Lấy danh sách đơn hàng với các điều kiện lọc sử dụng ORM
    */
-  async getDonHangs(maKH?: string, trangThai?: string) {
+  async getDonHangs(maKH?: string, trangThai?: string, page: number = 1, limit: number = 10) {
     try {
-      const where: any = {};
+      // Xây dựng điều kiện tìm kiếm
+      const whereClause: any = {};
+      
       if (maKH) {
-        where.MaKH = maKH;
+        whereClause.MaKH = maKH;
       }
+      
       if (trangThai) {
-        where.TrangThaiDonHang = trangThai;
+        whereClause.TrangThaiDonHang = trangThai;
       }
-
-      const donhangs = await DonHang.findAll({
-        where,
-        order: [['NgayDatHang', 'DESC']],
+      
+      const offset = (page - 1) * limit;
+      
+      // Sử dụng ORM để lấy dữ liệu
+      const { rows: donhangItems, count: totalItems } = await DonHang.findAndCountAll({
+        where: whereClause,
         include: [
           {
             model: KhachHang,
-            attributes: ['MaKH', 'HoTen', 'Email', 'SoDienThoai']
+            attributes: ['MaKH', 'HoTen']
           }
-        ]
+        ],
+        order: [['NgayDatHang', 'DESC']],
+        limit,
+        offset,
+        distinct: true
       });
-
-      return donhangs;
+      
+      // Chuyển đổi kết quả sang định dạng phù hợp
+      const donhangs = donhangItems.map(item => {
+        const data = item.get({ plain: true }) as any;
+        return {
+          MaDonHang: data.MaDonHang,
+          MaKH: data.MaKH,
+          TenKhachHang: data.KhachHang?.HoTen || '',
+          TenNguoiNhan: data.TenNguoiNhan,
+          SoDienThoaiNhan: data.SoDienThoaiNhan,
+          DiaChiGiaoHang: data.DiaChiGiaoHang,
+          EmailNguoiNhan: data.EmailNguoiNhan,
+          NgayDatHang: data.NgayDatHang,
+          TongTienSanPham: data.TongTienSanPham,
+          PhiVanChuyen: data.PhiVanChuyen,
+          GiamGia: data.GiamGia,
+          TongThanhToan: data.TongThanhToan,
+          PhuongThucThanhToan: data.PhuongThucThanhToan, 
+          TrangThaiThanhToan: data.TrangThaiThanhToan,
+          TrangThaiDonHang: data.TrangThaiDonHang,
+          GhiChuKhachHang: data.GhiChuKhachHang,
+          GhiChuQuanTri: data.GhiChuQuanTri,
+          NgayCapNhat: data.NgayCapNhat
+        } as IDonHangWithCustomer;
+      });
+      
+      const totalPages = Math.ceil(totalItems / limit);
+      
+      return {
+        donhangs,
+        pagination: {
+          totalItems,
+          totalPages,
+          currentPage: page,
+          itemsPerPage: limit,
+          nextPage: page < totalPages ? page + 1 : null,
+          prevPage: page > 1 ? page - 1 : null
+        }
+      };
     } catch (error) {
       logger.error(`Error in getDonHangs service: ${error}`);
       if (error instanceof AppError) throw error;
@@ -38,29 +85,69 @@ class DonHangService {
   }
 
   /**
-   * Lấy thông tin chi tiết đơn hàng theo mã
+   * Lấy thông tin chi tiết đơn hàng theo mã sử dụng ORM
    */
   async getDonHangById(maDonHang: number) {
     try {
-      const donhang = await DonHang.findByPk(maDonHang, {
-        include: [
-          {
-            model: ChiTietDonHang,
-            include: [
-              {
-                model: SanPham,
-                attributes: ['MaSP', 'TenSP', 'HinhAnhChinhURL', 'GiaBan']
-              }
-            ]
-          },
-          {
-            model: KhachHang,
-            attributes: ['MaKH', 'HoTen', 'Email', 'SoDienThoai']
-          }
-        ]
+      // Lấy thông tin đơn hàng
+      const donHang = await DonHang.findByPk(maDonHang, {
+        include: [{
+          model: KhachHang,
+          attributes: ['MaKH', 'HoTen']
+        }]
       });
-
-      return donhang;
+      
+      if (!donHang) {
+        return null;
+      }
+      
+      // Lấy chi tiết đơn hàng
+      const chiTietDonHang = await ChiTietDonHang.findAll({
+        where: { MaDonHang: maDonHang },
+        include: [{
+          model: SanPham,
+          attributes: ['MaSP', 'TenSP', 'HinhAnhChinhURL']
+        }]
+      });
+      
+      // Chuyển đổi sang định dạng mong muốn
+      const donHangData = donHang.get({ plain: true }) as any;
+      
+      const result: IDonHangFull = {
+        MaDonHang: donHangData.MaDonHang,
+        MaKH: donHangData.MaKH,
+        TenKhachHang: donHangData.KhachHang?.HoTen || '',
+        TenNguoiNhan: donHangData.TenNguoiNhan,
+        SoDienThoaiNhan: donHangData.SoDienThoaiNhan,
+        DiaChiGiaoHang: donHangData.DiaChiGiaoHang,
+        EmailNguoiNhan: donHangData.EmailNguoiNhan,
+        NgayDatHang: donHangData.NgayDatHang,
+        TongTienSanPham: donHangData.TongTienSanPham,
+        PhiVanChuyen: donHangData.PhiVanChuyen,
+        GiamGia: donHangData.GiamGia,
+        TongThanhToan: donHangData.TongThanhToan,
+        PhuongThucThanhToan: donHangData.PhuongThucThanhToan,
+        TrangThaiThanhToan: donHangData.TrangThaiThanhToan,
+        TrangThaiDonHang: donHangData.TrangThaiDonHang,
+        GhiChuKhachHang: donHangData.GhiChuKhachHang,
+        GhiChuQuanTri: donHangData.GhiChuQuanTri,
+        NgayCapNhat: donHangData.NgayCapNhat,
+        ChiTietDonHang: chiTietDonHang.map(item => {
+          const chiTietData = item.get({ plain: true }) as any;
+          return {
+            MaChiTietDH: chiTietData.MaChiTietDH,
+            MaDonHang: chiTietData.MaDonHang,
+            MaSP: chiTietData.MaSP,
+            TenSP: chiTietData.SanPham?.TenSP || '',
+            HinhAnhChinhURL: chiTietData.SanPham?.HinhAnhChinhURL || '',
+            SoLuong: chiTietData.SoLuong,
+            DonGia: chiTietData.DonGia,
+            ThanhTien: chiTietData.ThanhTien
+          };
+        })
+      };
+      
+      return result;
     } catch (error) {
       logger.error(`Error in getDonHangById service: ${error}`);
       if (error instanceof AppError) throw error;
@@ -115,7 +202,10 @@ class DonHangService {
           if (soLuongMoi < 0) {
             throw new AppError(`Sản phẩm '${sanPham.TenSP}' không đủ số lượng.`, 400);
           }
-          await sanPham.update({ SoLuongTon: soLuongMoi }, { transaction: t });
+          await sanPham.update({ 
+            SoLuongTon: soLuongMoi,
+            NgayCapNhat: new Date() 
+          }, { transaction: t });
         }
       }
 

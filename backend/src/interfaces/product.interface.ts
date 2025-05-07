@@ -7,6 +7,7 @@ export interface ISanPham {
   SoLuongTon: number;
   HinhAnhChinhURL: string;
   MaDanhMuc: number;
+  DacDiemNoiBat?: string;
   LuotXem: number;
   NgayTao: Date;
   NgayCapNhat: Date;
@@ -20,6 +21,8 @@ export interface ISanPhamCreate {
   SoLuongTon: number;
   HinhAnhChinhURL: string;
   MaDanhMuc: number;
+  DacDiemNoiBat?: string;
+  LuotXem?: number;
 }
 
 // Interface dùng để cập nhật Sản phẩm
@@ -30,6 +33,14 @@ export interface ISanPhamUpdate {
   SoLuongTon?: number;
   HinhAnhChinhURL?: string;
   MaDanhMuc?: number;
+  DacDiemNoiBat?: string;
+  LuotXem?: number;
+}
+
+// Interface cho response của Sản phẩm với đánh giá
+export interface ISanPhamWithReviews extends ISanPham {
+  DiemDanhGiaTrungBinh?: number;
+  SoLuongDanhGia?: number;
 }
 
 // Interface cho đối tượng Danh mục
@@ -40,6 +51,7 @@ export interface IDanhMuc {
   HinhAnh?: string;
   NgayTao: Date;
   NgayCapNhat: Date;
+  SoLuongSanPham?: number;
 }
 
 // Interface dùng để tạo Danh mục mới

@@ -1,12 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingBag, Users, TrendingUp, DollarSign, AlertTriangle, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { revenueData, topProducts, recentOrders, lowStockProducts, dashboardStats } from '@/mocks/dashboard';
+import { getDashboardData } from '@/lib/data';
 
-// Sử dụng dữ liệu từ mocks/dashboard.ts
+interface DashboardData {
+  revenueData: { month: string; value: number }[];
+  topProducts: { name: string; quantity: number; revenue: number }[];
+  recentOrders: { id: string; customer: string; date: string; amount: number; status: string }[];
+  lowStockProducts: { name: string; current: number; min: number }[];
+  dashboardStats: { title: string; value: string; color: string; growth: number }[];
+}
 
 export default function AdminDashboard() {
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month' | 'year'>('month');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await getDashboardData();
+        if (response.success && response.data) {
+          setDashboardData(response.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { 
@@ -29,6 +55,25 @@ export default function AdminDashboard() {
     'Khách hàng mới': <Users size={24} />,
     'Lượt truy cập': <TrendingUp size={24} />
   };
+
+  // Nếu đang tải dữ liệu, hiển thị trạng thái loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Nếu không có dữ liệu
+  if (!dashboardData) {
+    return (
+      <div className="text-center py-10">
+        <h2 className="text-xl font-semibold text-gray-700">Không thể tải dữ liệu</h2>
+        <p className="text-gray-500 mt-2">Vui lòng thử lại sau</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -84,7 +129,7 @@ export default function AdminDashboard() {
 
       {/* Thống kê tổng quan */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardStats.map((stat, index) => (
+        {dashboardData.dashboardStats.map((stat, index) => (
           <div key={index} className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -120,7 +165,7 @@ export default function AdminDashboard() {
           {/* Biểu đồ doanh thu */}
           <div className="h-80 w-full">
             <div className="flex items-end justify-between h-64 w-full">
-              {revenueData.map((item, index) => (
+              {dashboardData.revenueData.map((item, index) => (
                 <div key={index} className="flex flex-col items-center w-full">
                   <div 
                     className="bg-blue-500 rounded-t-sm w-6"
@@ -137,7 +182,7 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-medium mb-4">Sản phẩm bán chạy</h2>
           
           <div className="space-y-4">
-            {topProducts.slice(0, 5).map((product, index) => (
+            {dashboardData.topProducts.slice(0, 5).map((product, index) => (
               <div key={index} className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 font-medium">
                   {index + 1}
@@ -174,7 +219,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {recentOrders.map((order) => (
+                {dashboardData.recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer}</td>
@@ -214,7 +259,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="space-y-4">
-            {lowStockProducts.map((product, index) => (
+            {dashboardData.lowStockProducts.map((product, index) => (
               <div key={index} className="flex items-start">
                 <div className="p-2 rounded-md bg-red-50 text-red-500">
                   <Package size={18} />

@@ -1,22 +1,35 @@
-import express from 'express';
-import donhangController from '../controllers/donhang.controller';
-import { protect } from '../middlewares/auth';
+import { Router } from 'express';
+import donHangController from '../controllers/donhang.controller';
+import { protect, restrictTo } from '../middlewares/auth';
 
-const router = express.Router();
+const router = Router();
 
-// GET /api/donhangs - Lấy danh sách đơn hàng
-router.get('/', protect, donhangController.getDonHangs);
+/**
+ * @route   GET /api/don-hang
+ * @desc    Lấy danh sách đơn hàng
+ * @access  Private (Admin, Staff)
+ */
+router.get('/', protect, restrictTo('Admin', 'NhanVien'), donHangController.getDonHangs);
 
-// GET /api/donhangs/:id - Lấy thông tin chi tiết đơn hàng
-router.get('/:id', protect, donhangController.getDonHangById);
+/**
+ * @route   GET /api/don-hang/:id
+ * @desc    Lấy chi tiết đơn hàng theo ID
+ * @access  Private (Admin, Staff, Customer)
+ */
+router.get('/:id', protect, donHangController.getDonHangById);
 
-// POST /api/donhangs - Tạo đơn hàng mới
-router.post('/', protect, donhangController.createDonHang);
+/**
+ * @route   POST /api/don-hang
+ * @desc    Tạo đơn hàng mới
+ * @access  Private (Customer)
+ */
+router.post('/', protect, donHangController.createDonHang);
 
-// PUT /api/donhangs/:id - Cập nhật trạng thái đơn hàng
-router.put('/:id', protect, donhangController.updateDonHang);
-
-// POST /api/donhangs/:id/cancel - Hủy đơn hàng
-router.post('/:id/cancel', protect, donhangController.cancelDonHang);
+/**
+ * @route   PATCH /api/don-hang/:id
+ * @desc    Cập nhật trạng thái đơn hàng
+ * @access  Private (Admin, Staff)
+ */
+router.patch('/:id', protect, restrictTo('Admin', 'NhanVien'), donHangController.updateDonHang);
 
 export default router; 

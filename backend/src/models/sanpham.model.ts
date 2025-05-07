@@ -14,6 +14,7 @@ class SanPham extends Model<ISanPham, SanPhamCreationAttributes> implements ISan
   public SoLuongTon!: number;
   public HinhAnhChinhURL!: string;
   public MaDanhMuc!: number;
+  public DacDiemNoiBat!: string;
   public LuotXem!: number;
   public NgayTao!: Date;
   public NgayCapNhat!: Date;
@@ -51,6 +52,10 @@ SanPham.init(
     MaDanhMuc: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    DacDiemNoiBat: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     LuotXem: {
       type: DataTypes.INTEGER,

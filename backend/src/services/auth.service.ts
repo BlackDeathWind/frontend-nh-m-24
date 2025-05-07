@@ -6,6 +6,9 @@ import config from '../config/config';
 import { redisClient } from '../config/redis';
 import logger from '../utils/logger';
 import { SignOptions } from 'jsonwebtoken';
+import { sequelize } from '../config/database';
+import { literal } from 'sequelize';
+import { IKhachHangCreate, INhanVien } from '../interfaces/user.interface';
 
 interface IUserCreate {
   HoTen: string;
@@ -38,21 +41,49 @@ class AuthService {
         throw new AppError('Email đã được sử dụng. Vui lòng chọn email khác.', 400);
       }
 
-      // Tạo người dùng mới
-      const newUser = await KhachHang.create({
-        ...userData,
-        MaVaiTro: userData.MaVaiTro || 1, // Vai trò mặc định là khách hàng
-        NgayDangKy: new Date(),
-        TrangThai: true
+      // Tìm mã khách hàng cuối cùng để tạo mã mới
+      const lastUser = await KhachHang.findOne({
+        order: [['MaKH', 'DESC']]
       });
-
-      // Không trả về mật khẩu
-      const userWithoutPassword = { ...newUser.toJSON() };
-      if ('MatKhau' in userWithoutPassword) {
-        delete (userWithoutPassword as any).MatKhau;
+      
+      // Tạo mã KH mới
+      let newKhachHangId = 'KH001';
+      
+      if (lastUser) {
+        // Lấy số từ mã khách hàng cuối cùng và tăng lên 1
+        const lastId = lastUser.MaKH;
+        const numericPart = parseInt(lastId.replace(/^\D+/g, ''));
+        const newNumericPart = numericPart + 1;
+        // Định dạng lại với số 0 đứng trước nếu cần
+        newKhachHangId = `KH${newNumericPart.toString().padStart(3, '0')}`;
       }
+      
+      // Set vai trò là khách hàng (3)
+      const vaiTro = userData.MaVaiTro || 3; // Khách hàng
 
-      return userWithoutPassword;
+      // Sử dụng phương thức ORM create để tạo khách hàng mới
+      const newUser = await KhachHang.create({
+        MaKH: newKhachHangId,
+        HoTen: userData.HoTen,
+        Email: userData.Email,
+        MatKhau: userData.MatKhau, // sẽ được hash bởi hook beforeSave
+        SoDienThoai: userData.SoDienThoai,
+        MaVaiTro: vaiTro,
+        TrangThai: true,
+        NgayDangKy: new Date()
+      });
+      
+      // Không trả về mật khẩu
+      const userResponse = {
+        MaKH: newUser.MaKH,
+        HoTen: newUser.HoTen,
+        Email: newUser.Email,
+        SoDienThoai: newUser.SoDienThoai,
+        MaVaiTro: newUser.MaVaiTro,
+        TrangThai: newUser.TrangThai
+      };
+
+      return userResponse;
     } catch (error) {
       logger.error(`Error in register service: ${error}`);
       if (error instanceof AppError) throw error;
@@ -68,21 +99,30 @@ class AuthService {
       let user: KhachHang | NhanVien | null = null;
       let role: string;
       let userId: string = '';
+      let isAdmin = false;
 
-      // Kiểm tra đăng nhập cho quản trị viên hoặc khách hàng
+      // Nếu đăng nhập với vai trò admin, kiểm tra bảng NhanVien trước
       if (credentials.isAdmin) {
-        // Tìm nhân viên
         user = await NhanVien.findOne({ where: { Email: credentials.Email } });
-        role = 'admin';
         if (user) {
-          userId = user.MaNV;
+          isAdmin = true;
+          role = 'admin';
+          userId = (user as NhanVien).MaNV;
         }
       } else {
-        // Tìm khách hàng
+        // Nếu không, kiểm tra KhachHang trước
         user = await KhachHang.findOne({ where: { Email: credentials.Email } });
-        role = 'customer';
         if (user) {
-          userId = user.MaKH;
+          role = 'customer';
+          userId = (user as KhachHang).MaKH;
+        } else {
+          // Nếu không tìm thấy trong KhachHang, kiểm tra trong NhanVien
+          user = await NhanVien.findOne({ where: { Email: credentials.Email } });
+          if (user) {
+            isAdmin = true;
+            role = 'admin';
+            userId = (user as NhanVien).MaNV;
+          }
         }
       }
 
@@ -90,8 +130,8 @@ class AuthService {
         throw new AppError('Email hoặc mật khẩu không chính xác.', 401);
       }
 
-      // Kiểm tra mật khẩu
-      const isPasswordCorrect = await user.comparePassword(credentials.MatKhau);
+      // Kiểm tra mật khẩu bằng bcrypt trực tiếp
+      const isPasswordCorrect = await bcrypt.compare(credentials.MatKhau, user.MatKhau);
       if (!isPasswordCorrect) {
         throw new AppError('Email hoặc mật khẩu không chính xác.', 401);
       }
@@ -101,15 +141,21 @@ class AuthService {
         throw new AppError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
       }
 
-      // Cập nhật thời gian đăng nhập cuối
-      if (credentials.isAdmin) {
-        await (user as NhanVien).update({ LanDangNhapCuoi: new Date() });
+      // Cập nhật thời gian đăng nhập cuối - vẫn sử dụng raw query cho cập nhật ngày tháng
+      if (isAdmin) {
+        await NhanVien.update(
+          { LanDangNhapCuoi: literal('GETDATE()') },
+          { where: { MaNV: userId } }
+        );
       } else {
-        await (user as KhachHang).update({ LanDangNhapCuoi: new Date() });
+        await KhachHang.update(
+          { LanDangNhapCuoi: literal('GETDATE()') },
+          { where: { MaKH: userId } }
+        );
       }
 
       // Tạo JWT token
-      const token = this.generateToken(userId, String(user.MaVaiTro), role);
+      const token = this.generateToken(userId, String(user.MaVaiTro), isAdmin ? 'admin' : 'customer');
 
       // Không trả về mật khẩu
       const userWithoutPassword = { ...user.toJSON() };
@@ -120,6 +166,7 @@ class AuthService {
       return {
         user: userWithoutPassword,
         token,
+        isAdmin
       };
     } catch (error) {
       logger.error(`Error in login service: ${error}`);

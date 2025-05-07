@@ -1,54 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingBag, Package, TrendingUp, AlertTriangle, Clock, DollarSign, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-  sellerRevenueData,
-  sellerProducts,
-  sellerOrders,
-  sellerLowStockProducts,
-  sellerStats
-} from '@/mocks/seller-dashboard';
+import { getSellerDashboardData } from '@/lib/data';
 
-// Giả lập dữ liệu doanh thu
-const revenueData = [
-  { day: 'T2', value: 150000 },
-  { day: 'T3', value: 230000 },
-  { day: 'T4', value: 180000 },
-  { day: 'T5', value: 280000 },
-  { day: 'T6', value: 210000 },
-  { day: 'T7', value: 300000 },
-  { day: 'CN', value: 120000 },
-];
-
-// Giả lập dữ liệu sản phẩm của seller
-const myProducts = [
-  { id: 1, name: 'Bút bi cao cấp', quantity: 120, sold: 25, stock: 95 },
-  { id: 2, name: 'Sổ tay ghi chép', quantity: 85, sold: 32, stock: 53 },
-  { id: 3, name: 'Bộ màu vẽ 24 màu', quantity: 70, sold: 15, stock: 55 },
-  { id: 4, name: 'Kẹp giấy (hộp 100 cái)', quantity: 65, sold: 12, stock: 53 },
-  { id: 5, name: 'Bút highlight (bộ 5 cái)', quantity: 60, sold: 20, stock: 40 },
-];
-
-// Giả lập dữ liệu đơn hàng của seller
-const myOrders = [
-  { id: 'DH-12345', customer: 'Nguyễn Văn A', date: '15/10/2023', amount: 560000, status: 'completed' },
-  { id: 'DH-12346', customer: 'Trần Thị B', date: '15/10/2023', amount: 870000, status: 'processing' },
-  { id: 'DH-12347', customer: 'Lê Văn C', date: '14/10/2023', amount: 350000, status: 'completed' },
-  { id: 'DH-12348', customer: 'Phạm Thị D', date: '14/10/2023', amount: 1250000, status: 'pending' },
-  { id: 'DH-12349', customer: 'Hoàng Văn E', date: '13/10/2023', amount: 780000, status: 'cancelled' },
-];
-
-// Giả lập dữ liệu sản phẩm sắp hết hàng
-const lowStockProducts = [
-  { id: 1, name: 'Bút bi xanh', current: 5, min: 10 },
-  { id: 2, name: 'Sổ ghi chép bìa cứng', current: 3, min: 10 },
-  { id: 3, name: 'Kẹp giấy màu', current: 7, min: 20 },
-];
-
-// Sử dụng dữ liệu từ mocks/seller-dashboard.ts
+interface SellerDashboardData {
+  sellerRevenueData: { day: string; value: number }[];
+  sellerProducts: { id: number; name: string; quantity: number; sold: number; stock: number }[];
+  sellerOrders: { id: string; customer: string; date: string; amount: number; status: string }[];
+  sellerLowStockProducts: { id: number; name: string; current: number; min: number }[];
+  sellerStats: {
+    title: string;
+    value: string;
+    color: string;
+    growth: number;
+    icon?: React.ReactNode;
+  }[];
+}
 
 export default function SellerDashboard() {
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('week');
+  const [dashboardData, setDashboardData] = useState<SellerDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await getSellerDashboardData();
+        if (response.success && response.data) {
+          setDashboardData(response.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { 
@@ -58,12 +48,31 @@ export default function SellerDashboard() {
     }).format(amount);
   };
 
+  // Nếu đang tải dữ liệu, hiển thị trạng thái loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Nếu không có dữ liệu
+  if (!dashboardData) {
+    return (
+      <div className="text-center py-10">
+        <h2 className="text-xl font-semibold text-gray-700">Không thể tải dữ liệu</h2>
+        <p className="text-gray-500 mt-2">Vui lòng thử lại sau</p>
+      </div>
+    );
+  }
+
   // Đếm số đơn hàng theo trạng thái
   const orderStatusCount = {
-    pending: sellerOrders.filter(order => order.status === 'pending').length,
-    processing: sellerOrders.filter(order => order.status === 'processing').length,
-    completed: sellerOrders.filter(order => order.status === 'completed').length,
-    cancelled: sellerOrders.filter(order => order.status === 'cancelled').length,
+    pending: dashboardData.sellerOrders.filter(order => order.status === 'pending').length,
+    processing: dashboardData.sellerOrders.filter(order => order.status === 'processing').length,
+    completed: dashboardData.sellerOrders.filter(order => order.status === 'completed').length,
+    cancelled: dashboardData.sellerOrders.filter(order => order.status === 'cancelled').length,
   };
 
   return (
@@ -109,7 +118,7 @@ export default function SellerDashboard() {
 
       {/* Thống kê tổng quan */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {sellerStats.map((stat, index) => (
+        {dashboardData.sellerStats.map((stat, index) => (
           <div key={index} className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -145,7 +154,7 @@ export default function SellerDashboard() {
           {/* Biểu đồ doanh thu */}
           <div className="h-64 w-full">
             <div className="flex items-end justify-between h-52 w-full">
-              {sellerRevenueData.map((item, index) => (
+              {dashboardData.sellerRevenueData.map((item, index) => (
                 <div key={index} className="flex flex-col items-center w-full">
                   <div 
                     className="bg-blue-500 rounded-t-sm w-12"
@@ -211,7 +220,7 @@ export default function SellerDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {myProducts.map((product) => (
+                {dashboardData.sellerProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.quantity}</td>
@@ -242,30 +251,32 @@ export default function SellerDashboard() {
           </div>
           
           <div className="space-y-4">
-            {lowStockProducts.map((product, index) => (
+            {dashboardData.sellerLowStockProducts.map((product, index) => (
               <div key={index} className="flex items-start">
                 <div className="p-2 rounded-md bg-red-50 text-red-500">
                   <Package size={18} />
                 </div>
                 <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-gray-500">
-                    Còn {product.current}/{product.min} sản phẩm
-                  </p>
+                  <h3 className="text-sm font-medium text-gray-900">{product.name}</h3>
+                  <div className="mt-1 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <span className="text-xs text-red-600 font-medium">Còn lại: {product.current}</span>
+                      <span className="mx-2 text-gray-300">|</span>
+                      <span className="text-xs text-gray-500">Tối thiểu: {product.min}</span>
+                    </div>
+                    <button className="text-xs text-blue-600 font-medium hover:underline">
+                      Nhập thêm
+                    </button>
+                  </div>
                 </div>
-                <button className="text-sm text-blue-600 hover:underline">
-                  Đặt hàng
-                </button>
               </div>
             ))}
           </div>
           
-          <div className="mt-6">
-            <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium flex items-center justify-center">
-              <Package className="h-4 w-4 mr-2" />
-              Thêm sản phẩm mới
-            </button>
-          </div>
+          <button className="mt-6 w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-sm font-medium flex items-center justify-center">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Xem tất cả cảnh báo
+          </button>
         </div>
       </div>
     </div>

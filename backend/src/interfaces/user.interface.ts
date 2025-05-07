@@ -44,7 +44,7 @@ export interface IUserProfile {
   address?: string;
   avatarUrl?: string;
   role: string;
-} 
+}
 
 // Interface cho đối tượng Khách hàng
 export interface IKhachHang {
@@ -102,6 +102,12 @@ export interface INhanVienCreate {
   MatKhau: string;
   SoDienThoai?: string;
   MaVaiTro: number;
+}
+
+// Interface dùng để đăng nhập Nhân viên
+export interface INhanVienLogin {
+  Email: string;
+  MatKhau: string;
 }
 
 // Interface dùng để cập nhật thông tin Nhân viên
