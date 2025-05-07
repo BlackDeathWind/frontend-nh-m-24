@@ -27,6 +27,7 @@ interface IUserLogin {
 interface IUserUpdate {
   HoTen?: string;
   SoDienThoai?: string;
+  DiaChi?: string;
 }
 
 class AuthService {
@@ -256,6 +257,7 @@ class AuthService {
         await (user as NhanVien).update({
           HoTen: userData.HoTen,
           SoDienThoai: userData.SoDienThoai,
+          DiaChi: userData.DiaChi,
         });
       } else {
         user = await KhachHang.findByPk(userId);
@@ -267,6 +269,7 @@ class AuthService {
         await (user as KhachHang).update({
           HoTen: userData.HoTen,
           SoDienThoai: userData.SoDienThoai,
+          DiaChi: userData.DiaChi,
         });
       }
 

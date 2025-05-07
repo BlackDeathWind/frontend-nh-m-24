@@ -13,6 +13,7 @@ class KhachHang extends Model<IKhachHang, KhachHangCreationAttributes> implement
   public Email!: string;
   public MatKhau!: string;
   public SoDienThoai?: string;
+  public DiaChi?: string;
   public NgayDangKy!: Date;
   public LanDangNhapCuoi?: Date;
   public TrangThai!: boolean;
@@ -49,6 +50,10 @@ KhachHang.init(
       allowNull: false,
     },
     SoDienThoai: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    DiaChi: {
       type: DataTypes.STRING,
       allowNull: true,
     },

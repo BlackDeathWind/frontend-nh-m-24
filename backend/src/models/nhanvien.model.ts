@@ -13,6 +13,7 @@ class NhanVien extends Model<INhanVien, NhanVienCreationAttributes> implements I
   public Email!: string;
   public MatKhau!: string;
   public SoDienThoai?: string;
+  public DiaChi?: string;
   public MaVaiTro!: number;
   public TrangThai!: boolean;
   public NgayTao!: Date;
@@ -50,6 +51,10 @@ NhanVien.init(
       allowNull: false,
     },
     SoDienThoai: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    DiaChi: {
       type: DataTypes.STRING,
       allowNull: true,
     },

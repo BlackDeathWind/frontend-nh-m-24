@@ -2,6 +2,19 @@
 USE shopdungcuhoctap;
 GO
 
+-- Thêm cột DiaChi vào bảng KhachHang và NhanVien nếu chưa tồn tại
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'DiaChi' AND Object_ID = Object_ID(N'KhachHang'))
+BEGIN
+    ALTER TABLE KhachHang ADD DiaChi NVARCHAR(255) NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'DiaChi' AND Object_ID = Object_ID(N'NhanVien'))
+BEGIN
+    ALTER TABLE NhanVien ADD DiaChi NVARCHAR(255) NULL;
+END
+GO
+
 -- View cho bảng VaiTro
 CREATE OR ALTER VIEW vw_VaiTro AS
 SELECT MaVaiTro, TenVaiTro, MoTa
@@ -16,6 +29,7 @@ SELECT
     KH.Email, 
     KH.MatKhau,
     KH.SoDienThoai, 
+    KH.DiaChi,
     KH.NgayDangKy, 
     KH.LanDangNhapCuoi, 
     KH.TrangThai, 
@@ -33,6 +47,7 @@ SELECT
     NV.Email, 
     NV.MatKhau,
     NV.SoDienThoai, 
+    NV.DiaChi,
     NV.MaVaiTro, 
     VT.TenVaiTro,
     NV.TrangThai, 

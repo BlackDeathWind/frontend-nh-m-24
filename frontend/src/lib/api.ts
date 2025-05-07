@@ -43,6 +43,22 @@ export const authAPI = {
       if (response.data.data.token) {
         localStorage.setItem('token', response.data.data.token);
       }
+
+      // Ánh xạ dữ liệu từ backend sang frontend format
+      if (response.data.data && response.data.data.user) {
+        const backendUser = response.data.data.user;
+        response.data.data.user = {
+          id: backendUser.MaKH || backendUser.MaNV,
+          email: backendUser.Email,
+          fullName: backendUser.HoTen,
+          role: backendUser.MaVaiTro 
+            ? (backendUser.TenVaiTro || (backendUser.MaVaiTro === 3 ? 'customer' : 'admin')) 
+            : 'customer',
+          phoneNumber: backendUser.SoDienThoai || null,
+          address: backendUser.DiaChi || null,
+        };
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
@@ -80,6 +96,22 @@ export const authAPI = {
   getProfile: async () => {
     try {
       const response = await api.get('/auth/profile');
+      
+      // Ánh xạ dữ liệu từ backend sang frontend format
+      if (response.data.status === 'success' && response.data.data) {
+        const backendUser = response.data.data;
+        response.data.data = {
+          id: backendUser.MaKH || backendUser.MaNV,
+          email: backendUser.Email,
+          fullName: backendUser.HoTen,
+          role: backendUser.MaVaiTro 
+            ? (backendUser.TenVaiTro || (backendUser.MaVaiTro === 3 ? 'customer' : 'admin')) 
+            : 'customer',
+          phoneNumber: backendUser.SoDienThoai || null,
+          address: backendUser.DiaChi || null,
+        };
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Get profile error:', error);
@@ -93,7 +125,30 @@ export const authAPI = {
     address?: string;
   }) => {
     try {
-      const response = await api.put('/auth/profile', userData);
+      // Ánh xạ dữ liệu từ frontend sang backend format trước khi gửi
+      const backendUserData = {
+        hoTen: userData.fullName,
+        soDienThoai: userData.phoneNumber,
+        diaChi: userData.address
+      };
+      
+      const response = await api.put('/auth/profile', backendUserData);
+      
+      // Ánh xạ dữ liệu từ backend sang frontend format
+      if (response.data.status === 'success' && response.data.data) {
+        const backendUser = response.data.data;
+        response.data.data = {
+          id: backendUser.MaKH || backendUser.MaNV,
+          email: backendUser.Email,
+          fullName: backendUser.HoTen,
+          role: backendUser.MaVaiTro 
+            ? (backendUser.TenVaiTro || (backendUser.MaVaiTro === 3 ? 'customer' : 'admin')) 
+            : 'customer',
+          phoneNumber: backendUser.SoDienThoai || null,
+          address: backendUser.DiaChi || null,
+        };
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Update profile error:', error);

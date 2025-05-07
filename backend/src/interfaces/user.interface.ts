@@ -53,6 +53,7 @@ export interface IKhachHang {
   Email: string;
   MatKhau: string;
   SoDienThoai?: string;
+  DiaChi?: string;
   NgayDangKy: Date;
   LanDangNhapCuoi?: Date;
   TrangThai: boolean;
@@ -65,6 +66,7 @@ export interface IKhachHangCreate {
   Email: string;
   MatKhau: string;
   SoDienThoai?: string;
+  DiaChi?: string;
   MaVaiTro?: number;
 }
 
@@ -78,6 +80,7 @@ export interface IKhachHangLogin {
 export interface IKhachHangUpdate {
   HoTen?: string;
   SoDienThoai?: string;
+  DiaChi?: string;
   TrangThai?: boolean;
 }
 
@@ -88,6 +91,7 @@ export interface INhanVien {
   Email: string;
   MatKhau: string;
   SoDienThoai?: string;
+  DiaChi?: string;
   MaVaiTro: number;
   TrangThai: boolean;
   NgayTao: Date;
@@ -101,6 +105,7 @@ export interface INhanVienCreate {
   Email: string;
   MatKhau: string;
   SoDienThoai?: string;
+  DiaChi?: string;
   MaVaiTro: number;
 }
 
@@ -114,6 +119,7 @@ export interface INhanVienLogin {
 export interface INhanVienUpdate {
   HoTen?: string;
   SoDienThoai?: string;
+  DiaChi?: string;
   MaVaiTro?: number;
   TrangThai?: boolean;
 }

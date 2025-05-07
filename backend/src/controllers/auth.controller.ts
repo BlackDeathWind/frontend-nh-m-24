@@ -169,7 +169,7 @@ const AuthController = {
         return next(new AppError('Không tìm thấy thông tin người dùng.', 401));
       }
 
-      const { hoTen, soDienThoai } = req.body;
+      const { hoTen, soDienThoai, diaChi } = req.body;
       
       // Kiểm tra các trường dữ liệu
       if (!hoTen) {
@@ -180,6 +180,7 @@ const AuthController = {
       const updatedUser = await authService.updateUserProfile(req.user.id, {
         HoTen: hoTen,
         SoDienThoai: soDienThoai,
+        DiaChi: diaChi,
       }, req.user.userType);
 
       return successResponse(res, updatedUser, 'Cập nhật thông tin người dùng thành công.');

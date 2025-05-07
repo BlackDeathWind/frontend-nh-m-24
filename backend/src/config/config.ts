@@ -36,11 +36,11 @@ const config: Config = {
     PASSWORD: process.env.REDIS_PASSWORD || '',
   },
   DB: {
-    HOST: process.env.DB_HOST || 'LAPTOP-FIOKSCC8',
+    HOST: process.env.DB_HOST || 'DELL5580\SQLEXPRESS',
     PORT: parseInt(process.env.DB_PORT || '1433', 10),
-    NAME: process.env.DB_NAME || 'web',
+    NAME: process.env.DB_NAME || 'shopdungcuhoctap',
     USER: process.env.DB_USER || 'sa',
-    PASSWORD: process.env.DB_PASSWORD || 'man123',
+    PASSWORD: process.env.DB_PASSWORD || '21050043',
   },
 };
 
