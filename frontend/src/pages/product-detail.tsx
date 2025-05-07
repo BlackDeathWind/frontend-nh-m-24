@@ -54,14 +54,14 @@ const mapBackendProductToFrontend = (backendProduct: BackendProduct): Product =>
     description: backendProduct.MoTaDai,
     category: backendProduct.DanhMuc?.TenDanhMuc || 'Chưa phân loại',
     imageUrl: backendProduct.HinhAnhChinhURL,
-    stock: backendProduct.SoLuongTon,
-    rating: backendProduct.DiemDanhGiaTrungBinh || 0,
-    reviews: backendProduct.SoLuongDanhGia || backendProduct.DanhGia?.length || backendProduct.LuotXem || 0,
+    stock: Number(backendProduct.SoLuongTon),
+    rating: Number(backendProduct.DiemDanhGiaTrungBinh || 0),
+    reviews: Number(backendProduct.SoLuongDanhGia || backendProduct.DanhGia?.length || backendProduct.LuotXem || 0),
     features: features,
     comments: backendProduct.DanhGia?.map(review => ({
       id: review.MaDanhGia.toString(),
       userId: review.MaKH.toString(),
-      rating: review.DiemSo,
+      rating: Number(review.DiemSo),
       comment: review.BinhLuan,
       date: new Date(review.NgayDanhGia)
     })) || []
