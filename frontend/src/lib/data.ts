@@ -5,7 +5,7 @@ import { productAPI, dashboardAPI, orderAPI } from './api';
 
 // Export các function getter để lấy dữ liệu từ backend
 export const getProducts = () => productAPI.getProducts();
-export const getProductById = (id: string) => productAPI.getProductById(id);
+export const getProductById = (id: string) => productAPI.getProductById(Number(id));
 export const getDashboardData = () => dashboardAPI.getDashboardData();
 export const getSellerDashboardData = () => dashboardAPI.getSellerDashboardData();
 export const getOrders = () => orderAPI.getOrders();

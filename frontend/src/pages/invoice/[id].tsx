@@ -271,7 +271,7 @@ export default function InvoiceDetailPage() {
                       Trạng thái:
                     </div>
                     <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {order.TrangThaiDonHang}
+                      {order.TrangThaiDonHang === 'ChoXacNhan' ? 'Chờ xác nhận' : order.TrangThaiDonHang}
                     </div>
                   </div>
                 </div>
@@ -441,7 +441,7 @@ export default function InvoiceDetailPage() {
           <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 print:bg-white">
             <div className="flex flex-col items-center text-center text-sm text-gray-500">
               <p>Cảm ơn bạn đã mua sắm tại Modern Stationery Store!</p>
-              <p className="mt-1">Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email: support@modernstationery.com</p>
+              <p className="mt-1">Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email: 21050032@sudent.bdu.edu.vn</p>
               <p className="mt-3 text-xs">© {new Date().getFullYear()} Modern Stationery Store. Tất cả quyền được bảo lưu.</p>
             </div>
           </div>
