@@ -13,10 +13,16 @@ import {
   LazyProductDetailPage,
   LazyCartPage,
   LazyCheckoutPage,
+  LazyInvoicePage,
   LazyDashboardLayout,
   LazyAdminDashboard,
   LazySellerDashboard,
-  LazyProductsManagement
+  LazyProductsManagement,
+  LazyOrdersManagement,
+  LazyPendingOrders,
+  LazyProcessingOrders,
+  LazyDeliveredOrders,
+  LazyCancelledOrders
 } from './lib/lazy-components';
 
 // Component dùng để chuyển hướng dựa trên vai trò
@@ -55,6 +61,7 @@ function App() {
           <Route path="products/:id" element={<LazyProductDetailPage />} />
           <Route path="cart" element={<LazyCartPage />} />
           <Route path="checkout" element={<LazyCheckoutPage />} />
+          <Route path="invoice/:id" element={<LazyInvoicePage />} />
           <Route path="login" element={<LazyLoginPage />} />
           <Route path="register" element={<LazyRegisterPage />} />
           <Route path="profile" element={<LazyProfilePage />} />
@@ -74,6 +81,11 @@ function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<LazyAdminDashboard />} />
           <Route path="products" element={<LazyProductsManagement />} />
+          <Route path="orders" element={<LazyOrdersManagement />} />
+          <Route path="orders/pending" element={<LazyPendingOrders />} />
+          <Route path="orders/processing" element={<LazyProcessingOrders />} />
+          <Route path="orders/delivered" element={<LazyDeliveredOrders />} />
+          <Route path="orders/cancelled" element={<LazyCancelledOrders />} />
           {/* Thêm các routes admin khác ở đây */}
         </Route>
 

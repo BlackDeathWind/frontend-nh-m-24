@@ -372,6 +372,7 @@ export const cartAPI = {
 // API Đơn hàng
 export const orderAPI = {
   createOrder: async (orderData: {
+    userId?: string;
     items: {
       productId: string;
       quantity: number;
@@ -382,10 +383,22 @@ export const orderAPI = {
     digitalWallet?: 'momo' | 'zalopay' | 'vnpay';
   }) => {
     try {
+      // Kiểm tra xem có userId trước khi gửi request
+      if (!orderData.userId) {
+        console.warn('Missing userId in orderData');
+      }
+      
       const response = await api.post('/don-hang', orderData);
       return response.data;
     } catch (error) {
       console.error('Create order error:', error);
+      
+      // Log thêm thông tin chi tiết hơn về lỗi
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('Server response:', error.response.data);
+        console.error('Status code:', error.response.status);
+      }
+      
       throw error;
     }
   },

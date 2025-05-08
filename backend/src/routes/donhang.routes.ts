@@ -32,4 +32,11 @@ router.post('/', protect, donHangController.createDonHang);
  */
 router.patch('/:id', protect, restrictTo('Admin', 'NhanVien'), donHangController.updateDonHang);
 
+/**
+ * @route   POST /api/don-hang/:id/cancel
+ * @desc    Hủy đơn hàng
+ * @access  Private (Admin, Staff)
+ */
+router.post('/:id/cancel', protect, restrictTo('Admin', 'NhanVien'), donHangController.cancelDonHang);
+
 export default router; 

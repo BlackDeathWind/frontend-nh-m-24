@@ -43,10 +43,16 @@ export const LazyProductsPage = lazy(() => import('../pages/products'));
 export const LazyProductDetailPage = lazy(() => import('../pages/product-detail'));
 export const LazyCartPage = lazy(() => import('../pages/cart'));
 export const LazyCheckoutPage = lazy(() => import('../pages/checkout'));
+export const LazyInvoicePage = lazy(() => import('../pages/invoice/[id]'));
 export const LazyDashboardLayout = lazy(() => import('../components/dashboard/DashboardLayout'));
 export const LazyAdminDashboard = lazy(() => import('../pages/admin/dashboard'));
 export const LazySellerDashboard = lazy(() => import('../pages/seller/dashboard'));
 export const LazyProductsManagement = lazy(() => import('../pages/admin/products'));
+export const LazyOrdersManagement = lazy(() => import('../pages/admin/orders'));
+export const LazyPendingOrders = lazy(() => import('../pages/admin/orders/pending'));
+export const LazyProcessingOrders = lazy(() => import('../pages/admin/orders/processing'));
+export const LazyDeliveredOrders = lazy(() => import('../pages/admin/orders/delivered'));
+export const LazyCancelledOrders = lazy(() => import('../pages/admin/orders/cancelled'));
 
 // Pre-wrapped components với Suspense
 export const SuspendedNavbar = withSuspense(LazyNavbar);

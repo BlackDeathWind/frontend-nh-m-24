@@ -4,15 +4,17 @@ import { AppError } from '../middlewares/errorHandler';
 import { sequelize } from '../config/database';
 import logger from '../utils/logger';
 import { QueryTypes, literal } from 'sequelize';
+import { Transaction } from 'sequelize';
 
 class DonHangService {
   /**
-   * Lấy danh sách đơn hàng với các điều kiện lọc sử dụng ORM
+   * Lấy danh sách đơn hàng (có hỗ trợ phân trang và lọc theo trạng thái)
    */
   async getDonHangs(maKH?: string, trangThai?: string, page: number = 1, limit: number = 10) {
     try {
-      // Xây dựng điều kiện tìm kiếm
-      const whereClause: any = {};
+      const offset = (page - 1) * limit;
+      
+      let whereClause: any = {};
       
       if (maKH) {
         whereClause.MaKH = maKH;
@@ -22,65 +24,43 @@ class DonHangService {
         whereClause.TrangThaiDonHang = trangThai;
       }
       
-      const offset = (page - 1) * limit;
+      // Đếm tổng số đơn hàng thỏa mãn điều kiện
+      const count = await DonHang.count({ where: whereClause });
       
-      // Sử dụng ORM để lấy dữ liệu
-      const { rows: donhangItems, count: totalItems } = await DonHang.findAndCountAll({
+      // Lấy danh sách đơn hàng với phân trang
+      const donhangs = await DonHang.findAll({
         where: whereClause,
         include: [
           {
             model: KhachHang,
-            attributes: ['MaKH', 'HoTen']
+            as: 'KhachHang',
+            attributes: ['MaKH', 'HoTen', 'Email', 'SoDienThoai']
           }
         ],
         order: [['NgayDatHang', 'DESC']],
         limit,
-        offset,
-        distinct: true
+        offset
       });
       
-      // Chuyển đổi kết quả sang định dạng phù hợp
-      const donhangs = donhangItems.map(item => {
-        const data = item.get({ plain: true }) as any;
+      // Chuyển đổi dữ liệu để frontend dễ sử dụng
+      const formattedDonhangs = donhangs.map(donhang => {
+        const plainDonhang = donhang.get({ plain: true }) as any;
         return {
-          MaDonHang: data.MaDonHang,
-          MaKH: data.MaKH,
-          TenKhachHang: data.KhachHang?.HoTen || '',
-          TenNguoiNhan: data.TenNguoiNhan,
-          SoDienThoaiNhan: data.SoDienThoaiNhan,
-          DiaChiGiaoHang: data.DiaChiGiaoHang,
-          EmailNguoiNhan: data.EmailNguoiNhan,
-          NgayDatHang: data.NgayDatHang,
-          TongTienSanPham: data.TongTienSanPham,
-          PhiVanChuyen: data.PhiVanChuyen,
-          GiamGia: data.GiamGia,
-          TongThanhToan: data.TongThanhToan,
-          PhuongThucThanhToan: data.PhuongThucThanhToan, 
-          TrangThaiThanhToan: data.TrangThaiThanhToan,
-          TrangThaiDonHang: data.TrangThaiDonHang,
-          GhiChuKhachHang: data.GhiChuKhachHang,
-          GhiChuQuanTri: data.GhiChuQuanTri,
-          NgayCapNhat: data.NgayCapNhat
-        } as IDonHangWithCustomer;
+          ...plainDonhang,
+          TenKhachHang: plainDonhang.KhachHang?.HoTen || 'Không xác định'
+        };
       });
-      
-      const totalPages = Math.ceil(totalItems / limit);
       
       return {
-        donhangs,
-        pagination: {
-          totalItems,
-          totalPages,
-          currentPage: page,
-          itemsPerPage: limit,
-          nextPage: page < totalPages ? page + 1 : null,
-          prevPage: page > 1 ? page - 1 : null
-        }
+        donhangs: formattedDonhangs,
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit
       };
     } catch (error) {
-      logger.error(`Error in getDonHangs service: ${error}`);
-      if (error instanceof AppError) throw error;
-      throw new AppError('Đã xảy ra lỗi khi lấy danh sách đơn hàng.', 500);
+      logger.error('Error in getDonHangs:', error);
+      throw new AppError('Không thể lấy danh sách đơn hàng.', 500);
     }
   }
 
@@ -158,68 +138,181 @@ class DonHangService {
   /**
    * Tạo đơn hàng mới
    */
-  async createDonHang(donhangData: IDonHangCreate) {
-    const t = await sequelize.transaction();
-
+  async createDonHang(donhangData: IDonHangCreate | any) {
+    let t: Transaction | undefined;
     try {
-      // Tạo đơn hàng
-      const newDonHang = await DonHang.create({
-        MaKH: donhangData.MaKH,
-        TenNguoiNhan: donhangData.TenNguoiNhan,
-        SoDienThoaiNhan: donhangData.SoDienThoaiNhan,
-        DiaChiGiaoHang: donhangData.DiaChiGiaoHang,
-        EmailNguoiNhan: donhangData.EmailNguoiNhan,
-        NgayDatHang: new Date(),
-        TongTienSanPham: donhangData.TongTienSanPham,
-        PhiVanChuyen: donhangData.PhiVanChuyen,
-        GiamGia: donhangData.GiamGia,
-        TongThanhToan: donhangData.TongThanhToan,
-        PhuongThucThanhToan: donhangData.PhuongThucThanhToan,
-        TrangThaiThanhToan: 'Chưa thanh toán',
-        TrangThaiDonHang: 'Đang xử lý',
-        GhiChuKhachHang: donhangData.GhiChuKhachHang,
-        NgayCapNhat: new Date()
-      }, { transaction: t });
+      t = await sequelize.transaction();
 
-      // Tạo chi tiết đơn hàng
-      const chiTietDonHangPromises = donhangData.ChiTietDonHang.map(item => {
-        return ChiTietDonHang.create({
-          MaDonHang: newDonHang.MaDonHang,
-          MaSP: item.MaSP,
-          SoLuong: item.SoLuong,
-          DonGia: item.DonGia,
-          ThanhTien: item.ThanhTien
-        }, { transaction: t });
-      });
-
-      await Promise.all(chiTietDonHangPromises);
-
-      // Cập nhật số lượng tồn kho của sản phẩm
-      for (const item of donhangData.ChiTietDonHang) {
-        const sanPham = await SanPham.findByPk(item.MaSP, { transaction: t });
-        if (sanPham) {
-          const soLuongMoi = sanPham.SoLuongTon - item.SoLuong;
-          if (soLuongMoi < 0) {
-            throw new AppError(`Sản phẩm '${sanPham.TenSP}' không đủ số lượng.`, 400);
+      // Kiểm tra xem dữ liệu đến từ frontend hay không
+      // Dữ liệu từ frontend có định dạng khác với backend
+      const isFromFrontend = donhangData.items && Array.isArray(donhangData.items);
+      
+      // Xử lý dữ liệu từ frontend
+      let processedData: IDonHangCreate;
+      
+      if (isFromFrontend) {
+        // Lấy thông tin người dùng từ database
+        const user = await KhachHang.findByPk(donhangData.userId || ''); 
+        
+        if (!user) {
+          throw new AppError('Không tìm thấy thông tin người dùng.', 404);
+        }
+        
+        // Tính tổng tiền sản phẩm
+        let tongTienSanPham = 0;
+        const chiTietDonHang = [];
+        
+        // Lấy thông tin chi tiết sản phẩm và tính tổng tiền
+        for (const item of donhangData.items) {
+          const sanpham = await SanPham.findByPk(item.productId);
+          if (!sanpham) {
+            throw new AppError(`Không tìm thấy sản phẩm với ID ${item.productId}`, 404);
           }
-          await sanPham.update({ 
-            SoLuongTon: soLuongMoi,
-            NgayCapNhat: new Date() 
-          }, { transaction: t });
+          
+          if (sanpham.SoLuongTon < item.quantity) {
+            throw new AppError(`Sản phẩm ${sanpham.TenSP} chỉ còn ${sanpham.SoLuongTon} sản phẩm.`, 400);
+          }
+          
+          const thanhTien = sanpham.GiaBan * item.quantity;
+          tongTienSanPham += thanhTien;
+          
+          chiTietDonHang.push({
+            MaSP: sanpham.MaSP,
+            SoLuong: item.quantity,
+            DonGia: sanpham.GiaBan,
+            ThanhTien: thanhTien
+          });
+        }
+        
+        // Phí vận chuyển mặc định: 30,000 VND
+        const phiVanChuyen = 30000;
+        // Hiện tại không có giảm giá
+        const giamGia = 0;
+        // Tổng thanh toán = tổng tiền sản phẩm + phí vận chuyển - giảm giá
+        const tongThanhToan = tongTienSanPham + phiVanChuyen - giamGia;
+        
+        // Tạo dữ liệu đơn hàng theo định dạng backend mong đợi
+        processedData = {
+          MaKH: user.MaKH,
+          TenNguoiNhan: user.HoTen,
+          SoDienThoaiNhan: user.SoDienThoai || '',
+          DiaChiGiaoHang: donhangData.shippingAddress,
+          EmailNguoiNhan: '21050043@sudent.bdu.edu.vn',
+          TongTienSanPham: tongTienSanPham,
+          PhiVanChuyen: phiVanChuyen,
+          GiamGia: giamGia,
+          TongThanhToan: tongThanhToan,
+          PhuongThucThanhToan: donhangData.paymentMethod === 'cod' ? 'TienMat' : 'ViDienTu',
+          GhiChuKhachHang: donhangData.notes || null,
+          ChiTietDonHang: chiTietDonHang
+        };
+      } else {
+        // Dữ liệu từ backend có định dạng đúng
+        processedData = donhangData;
+      }
+      
+      // Sử dụng raw query để tạo đơn hàng thay vì ORM để tránh lỗi chuyển đổi ngày tháng
+      const ngayHienTai = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      
+      const [donhangResult] = await sequelize.query(
+        `INSERT INTO DonHang (
+          MaKH, TenNguoiNhan, SoDienThoaiNhan, DiaChiGiaoHang, EmailNguoiNhan,
+          NgayDatHang, TongTienSanPham, PhiVanChuyen, GiamGia, TongThanhToan,
+          PhuongThucThanhToan, TrangThaiThanhToan, TrangThaiDonHang, GhiChuKhachHang, NgayCapNhat
+        ) 
+        OUTPUT INSERTED.MaDonHang
+        VALUES (
+          :MaKH, :TenNguoiNhan, :SoDienThoaiNhan, :DiaChiGiaoHang, :EmailNguoiNhan,
+          GETDATE(), :TongTienSanPham, :PhiVanChuyen, :GiamGia, :TongThanhToan,
+          :PhuongThucThanhToan, :TrangThaiThanhToan, :TrangThaiDonHang, :GhiChuKhachHang, GETDATE()
+        )`,
+        {
+          replacements: {
+            MaKH: processedData.MaKH,
+            TenNguoiNhan: processedData.TenNguoiNhan,
+            SoDienThoaiNhan: processedData.SoDienThoaiNhan,
+            DiaChiGiaoHang: processedData.DiaChiGiaoHang,
+            EmailNguoiNhan: processedData.EmailNguoiNhan,
+            TongTienSanPham: processedData.TongTienSanPham,
+            PhiVanChuyen: processedData.PhiVanChuyen,
+            GiamGia: processedData.GiamGia,
+            TongThanhToan: processedData.TongThanhToan,
+            PhuongThucThanhToan: processedData.PhuongThucThanhToan,
+            TrangThaiThanhToan: 'ChuaThanhToan',
+            TrangThaiDonHang: 'ChoXacNhan',
+            GhiChuKhachHang: processedData.GhiChuKhachHang || null
+          },
+          type: QueryTypes.INSERT,
+          transaction: t
+        }
+      );
+      
+      // Lấy ID đơn hàng vừa tạo
+      const maDonHang = donhangResult && Array.isArray(donhangResult) && donhangResult.length > 0 ? 
+        donhangResult[0].MaDonHang : null;
+      
+      if (!maDonHang) {
+        throw new AppError('Không thể tạo đơn hàng.', 500);
+      }
+      
+      // Tạo chi tiết đơn hàng
+      for (const chiTiet of processedData.ChiTietDonHang) {
+        await sequelize.query(
+          `INSERT INTO ChiTietDonHang (
+            MaDonHang, MaSP, SoLuong, DonGia, ThanhTien
+          ) VALUES (
+            :MaDonHang, :MaSP, :SoLuong, :DonGia, :ThanhTien
+          )`,
+          {
+            replacements: {
+              MaDonHang: maDonHang,
+              MaSP: chiTiet.MaSP,
+              SoLuong: chiTiet.SoLuong,
+              DonGia: chiTiet.DonGia,
+              ThanhTien: chiTiet.ThanhTien
+            },
+            type: QueryTypes.INSERT,
+            transaction: t
+          }
+        );
+        
+        // Cập nhật số lượng tồn sản phẩm
+        await sequelize.query(
+          `UPDATE SanPham 
+           SET SoLuongTon = SoLuongTon - :SoLuong, 
+               NgayCapNhat = GETDATE()
+           WHERE MaSP = :MaSP`,
+          {
+            replacements: {
+              MaSP: chiTiet.MaSP,
+              SoLuong: chiTiet.SoLuong
+            },
+            type: QueryTypes.UPDATE,
+            transaction: t
+          }
+        );
+      }
+      
+      // Commit transaction
+      await t.commit();
+      
+      // Lấy thông tin đơn hàng đã tạo
+      const donhang = await this.getDonHangById(maDonHang);
+      
+      // Trả về dữ liệu đơn hàng đã tạo
+      return donhang;
+    } catch (error) {
+      // Rollback transaction nếu có lỗi
+      if (t) {
+        try {
+          await t.rollback();
+        } catch (rollbackError) {
+          logger.error('Lỗi khi rollback transaction:', rollbackError);
         }
       }
-
-      await t.commit();
-
-      // Lấy đơn hàng đầy đủ sau khi tạo
-      const createdDonHang = await this.getDonHangById(newDonHang.MaDonHang);
       
-      return createdDonHang;
-    } catch (error) {
-      await t.rollback();
-      logger.error(`Error in createDonHang service: ${error}`);
-      if (error instanceof AppError) throw error;
-      throw new AppError('Đã xảy ra lỗi khi tạo đơn hàng.', 500);
+      logger.error('Lỗi khi tạo đơn hàng:', error);
+      throw error;
     }
   }
 
@@ -228,20 +321,38 @@ class DonHangService {
    */
   async updateDonHang(maDonHang: number, updateData: IDonHangUpdate) {
     try {
+      // Kiểm tra xem đơn hàng có tồn tại không
       const donhang = await DonHang.findByPk(maDonHang);
 
       if (!donhang) {
         return null;
       }
 
-      // Cập nhật thông tin
-      const updatedDonHang = await donhang.update({
-        TrangThaiDonHang: updateData.TrangThaiDonHang || donhang.TrangThaiDonHang,
-        TrangThaiThanhToan: updateData.TrangThaiThanhToan || donhang.TrangThaiThanhToan,
-        GhiChuQuanTri: updateData.GhiChuQuanTri || donhang.GhiChuQuanTri,
-        NgayCapNhat: new Date()
-      });
+      // Lấy giá trị hiện tại của đơn hàng để sử dụng nếu không có dữ liệu cập nhật
+      const trangThaiDonHang = updateData.TrangThaiDonHang || donhang.TrangThaiDonHang;
+      const trangThaiThanhToan = updateData.TrangThaiThanhToan || donhang.TrangThaiThanhToan;
+      const ghiChuQuanTri = updateData.GhiChuQuanTri || donhang.GhiChuQuanTri;
 
+      // Sử dụng raw query để cập nhật đơn hàng thay vì ORM để tránh lỗi chuyển đổi ngày tháng
+      await sequelize.query(
+        `UPDATE [DonHang]
+        SET [TrangThaiDonHang] = :trangThaiDonHang,
+            [TrangThaiThanhToan] = :trangThaiThanhToan,
+            [GhiChuQuanTri] = :ghiChuQuanTri,
+            [NgayCapNhat] = GETDATE()
+        WHERE [MaDonHang] = :maDonHang`,
+        {
+          replacements: {
+            maDonHang: maDonHang,
+            trangThaiDonHang: trangThaiDonHang,
+            trangThaiThanhToan: trangThaiThanhToan,
+            ghiChuQuanTri: ghiChuQuanTri
+          },
+          type: QueryTypes.UPDATE
+        }
+      );
+
+      // Lấy dữ liệu đơn hàng đã cập nhật
       return this.getDonHangById(maDonHang);
     } catch (error) {
       logger.error(`Error in updateDonHang service: ${error}`);
@@ -257,42 +368,79 @@ class DonHangService {
     const t = await sequelize.transaction();
 
     try {
-      const donhang = await DonHang.findByPk(maDonHang, { transaction: t });
+      // Kiểm tra xem đơn hàng có tồn tại không
+      const [donhangRows] = await sequelize.query(
+        `SELECT * FROM DonHang WHERE MaDonHang = :maDonHang`,
+        {
+          replacements: { maDonHang },
+          type: QueryTypes.SELECT,
+          transaction: t
+        }
+      );
 
-      if (!donhang) {
+      if (!donhangRows || (Array.isArray(donhangRows) && donhangRows.length === 0)) {
         await t.rollback();
         return null;
       }
 
-      // Chỉ cho phép hủy đơn hàng ở trạng thái 'Đang xử lý' hoặc 'Chờ thanh toán'
-      if (!['Đang xử lý', 'Chờ thanh toán'].includes(donhang.TrangThaiDonHang)) {
+      const donhang = Array.isArray(donhangRows) ? donhangRows[0] : donhangRows;
+
+      // Chỉ cho phép hủy đơn hàng ở trạng thái 'ChoXacNhan' hoặc 'ChuaThanhToan'
+      if (!['ChoXacNhan', 'ChuaThanhToan'].includes(donhang.TrangThaiDonHang)) {
         await t.rollback();
         throw new AppError('Không thể hủy đơn hàng đã được xử lý.', 400);
       }
 
-      // Hoàn lại số lượng sản phẩm về kho
-      const chiTietDonHang = await ChiTietDonHang.findAll({
-        where: { MaDonHang: maDonHang },
-        transaction: t
-      });
+      // Lấy danh sách chi tiết đơn hàng
+      const [chiTietDonHang] = await sequelize.query(
+        `SELECT * FROM ChiTietDonHang WHERE MaDonHang = :maDonHang`,
+        {
+          replacements: { maDonHang },
+          type: QueryTypes.SELECT,
+          transaction: t
+        }
+      );
 
-      for (const item of chiTietDonHang) {
-        const sanPham = await SanPham.findByPk(item.MaSP, { transaction: t });
-        if (sanPham) {
-          const soLuongMoi = sanPham.SoLuongTon + item.SoLuong;
-          await sanPham.update({ SoLuongTon: soLuongMoi }, { transaction: t });
+      // Hoàn lại số lượng sản phẩm về kho
+      if (Array.isArray(chiTietDonHang)) {
+        for (const item of chiTietDonHang) {
+          await sequelize.query(
+            `UPDATE SanPham 
+             SET SoLuongTon = SoLuongTon + :soLuong, 
+                 NgayCapNhat = GETDATE()
+             WHERE MaSP = :maSP`,
+            {
+              replacements: {
+                maSP: item.MaSP,
+                soLuong: item.SoLuong
+              },
+              type: QueryTypes.UPDATE,
+              transaction: t
+            }
+          );
         }
       }
 
       // Cập nhật trạng thái đơn hàng
-      await donhang.update({
-        TrangThaiDonHang: 'Đã hủy',
-        GhiChuQuanTri: lyDo ? `Đơn hàng bị hủy. Lý do: ${lyDo}` : 'Đơn hàng bị hủy.',
-        NgayCapNhat: new Date()
-      }, { transaction: t });
+      await sequelize.query(
+        `UPDATE DonHang 
+         SET TrangThaiDonHang = 'DaHuy', 
+             GhiChuQuanTri = :ghiChu,
+             NgayCapNhat = GETDATE()
+         WHERE MaDonHang = :maDonHang`,
+        {
+          replacements: {
+            maDonHang,
+            ghiChu: lyDo ? `Đơn hàng bị hủy. Lý do: ${lyDo}` : 'Đơn hàng bị hủy.'
+          },
+          type: QueryTypes.UPDATE,
+          transaction: t
+        }
+      );
 
       await t.commit();
 
+      // Trả về dữ liệu đơn hàng đã cập nhật
       return this.getDonHangById(maDonHang);
     } catch (error) {
       await t.rollback();

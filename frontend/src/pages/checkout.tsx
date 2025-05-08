@@ -135,6 +135,7 @@ export default function CheckoutPage() {
     try {
       // Chuẩn bị dữ liệu đơn hàng
       const orderData = {
+        userId: user?.id,
         items: items.map(item => ({
           productId: item.product.id,
           quantity: item.quantity
@@ -145,29 +146,41 @@ export default function CheckoutPage() {
         digitalWallet: formData.paymentMethod === 'digital' ? formData.digitalWallet as DigitalWallet : undefined
       };
       
+      console.log('Sending order data:', orderData);
+      
       // Gửi đơn hàng đến server
       const orderResponse = await orderAPI.createOrder(orderData);
       
       if (orderResponse.status === 'success' && orderResponse.data) {
-        const orderId = orderResponse.data.id;
+        const orderId = orderResponse.data.id || orderResponse.data.MaDonHang;
         
-        // Nếu thanh toán qua ví điện tử, chuyển đến trang thanh toán
-        if (formData.paymentMethod === 'digital' && formData.digitalWallet) {
-          // TODO: Tính năng thanh toán sẽ được thêm trong tương lai
-          showNotification('info', 'Tính năng thanh toán điện tử sẽ được cập nhật trong tương lai');
-          clearCart();
-          navigate(`/orders/${orderId}`);
-        } else {
-          // Thanh toán COD - hiển thị thông báo thành công
-          showNotification('success', 'Đặt hàng thành công! Cảm ơn bạn đã mua sắm');
-          clearCart();
-          navigate(`/orders/${orderId}`);
-        }
+        // Hiển thị thông báo thành công với cảnh báo đặc biệt
+        showNotification('success', 'Thanh toán thành công!');
+        // Hiển thị thông báo cảnh báo riêng biệt
+        setTimeout(() => {
+          showNotification('warning', 'Lưu ý đây không phải là thanh toán thật, dự án đang trong quá trình thử nghiệm');
+        }, 500);
+        
+        // Xóa giỏ hàng và chuyển hướng đến trang hóa đơn
+        clearCart();
+        navigate(`/invoice/${orderId}`);
       } else {
         throw new Error(orderResponse.message || 'Đặt hàng thất bại');
       }
     } catch (error: any) {
-      showNotification('error', error.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại');
+      console.error('Checkout error details:', error);
+      let errorMessage = 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại';
+      
+      if (error.response) {
+        // Lỗi từ server
+        const serverError = error.response.data;
+        errorMessage = serverError.message || 'Lỗi máy chủ: ' + (error.response.status || '');
+      } else if (error.message) {
+        // Lỗi từ client
+        errorMessage = error.message;
+      }
+      
+      showNotification('error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

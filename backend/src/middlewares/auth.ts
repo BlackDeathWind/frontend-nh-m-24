@@ -98,9 +98,29 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 export const restrictTo = (...vaiTroIds: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // Kiểm tra vai trò
-    if (!req.user || !vaiTroIds.includes(req.user.vaiTroId)) {
+    if (!req.user) {
       return next(new AppError('Bạn không có quyền thực hiện hành động này.', 403));
     }
+
+    // Kiểm tra vai trò dạng chuỗi và số
+    const user = req.user; // Đảm bảo req.user không undefined
+    const hasValidRole = vaiTroIds.some(role => {
+      // Nếu vai trò là Admin và người dùng có MaVaiTro=1
+      if (role === 'Admin' && user.vaiTroId === '1') {
+        return true;
+      }
+      // Nếu vai trò là NhanVien và người dùng có MaVaiTro=2
+      if (role === 'NhanVien' && user.vaiTroId === '2') {
+        return true;
+      }
+      // Kiểm tra trực tiếp nếu vaiTroId giống hệt role
+      return user.vaiTroId === role;
+    });
+
+    if (!hasValidRole) {
+      return next(new AppError('Bạn không có quyền thực hiện hành động này.', 403));
+    }
+    
     next();
   };
 };

@@ -10,9 +10,19 @@ const DonHangController = {
     try {
       const maKH = req.query.maKH as string;
       const trangThai = req.query.trangThai as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
       
-      const donhangs = await donhangService.getDonHangs(maKH, trangThai);
-      return successResponse(res, donhangs, 'Lấy danh sách đơn hàng thành công.');
+      const result = await donhangService.getDonHangs(maKH, trangThai, page, limit);
+      return successResponse(res, {
+        donhangs: result.donhangs,
+        pagination: {
+          totalItems: result.totalItems,
+          totalPages: result.totalPages,
+          currentPage: page,
+          limit
+        }
+      }, 'Lấy danh sách đơn hàng thành công.');
     } catch (error) {
       next(error);
     }
@@ -43,15 +53,31 @@ const DonHangController = {
   async createDonHang(req: Request, res: Response, next: NextFunction) {
     try {
       const donhangData = req.body;
+      const userData = req.user;
       
-      // Validation cơ bản
-      if (!donhangData.MaKH || !donhangData.TenNguoiNhan || !donhangData.SoDienThoaiNhan || 
-          !donhangData.DiaChiGiaoHang || !donhangData.ChiTietDonHang || donhangData.ChiTietDonHang.length === 0) {
-        return next(new AppError('Vui lòng cung cấp đầy đủ thông tin đơn hàng.', 400));
+      // Thêm userId từ JWT token nếu là request từ frontend
+      if (donhangData.items && Array.isArray(donhangData.items)) {
+        donhangData.userId = userData?.id;
+      } else {
+        // Validation cơ bản cho định dạng backend
+        if (!donhangData.MaKH || !donhangData.TenNguoiNhan || !donhangData.SoDienThoaiNhan || 
+            !donhangData.DiaChiGiaoHang || !donhangData.ChiTietDonHang || donhangData.ChiTietDonHang.length === 0) {
+          return next(new AppError('Vui lòng cung cấp đầy đủ thông tin đơn hàng.', 400));
+        }
       }
       
       const newDonHang = await donhangService.createDonHang(donhangData);
-      return successResponse(res, newDonHang, 'Tạo đơn hàng thành công.', 201);
+      
+      // Định dạng lại ID để frontend có thể sử dụng
+      let responseData: any = newDonHang;
+      if (newDonHang) {
+        responseData = {
+          ...JSON.parse(JSON.stringify(newDonHang)),
+          id: newDonHang.MaDonHang // Thêm trường id để frontend có thể truy cập dễ dàng
+        };
+      }
+      
+      return successResponse(res, responseData, 'Tạo đơn hàng thành công.', 201);
     } catch (error) {
       next(error);
     }
@@ -61,11 +87,25 @@ const DonHangController = {
   async updateDonHang(req: Request, res: Response, next: NextFunction) {
     try {
       const maDonHang = parseInt(req.params.id);
-      const updateData = req.body;
+      const requestData = req.body;
       
       if (isNaN(maDonHang)) {
         return next(new AppError('Mã đơn hàng không hợp lệ.', 400));
       }
+      
+      // Biến đổi dữ liệu từ frontend thành định dạng dữ liệu phù hợp với backend
+      const updateData = {
+        TrangThaiDonHang: requestData.status || requestData.TrangThaiDonHang,
+        TrangThaiThanhToan: requestData.paymentStatus || requestData.TrangThaiThanhToan,
+        GhiChuQuanTri: requestData.adminNote || requestData.GhiChuQuanTri
+      };
+      
+      // Loại bỏ các trường không được cung cấp
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === undefined) {
+          delete updateData[key as keyof typeof updateData];
+        }
+      });
       
       const updatedDonHang = await donhangService.updateDonHang(maDonHang, updateData);
       
@@ -75,6 +115,7 @@ const DonHangController = {
       
       return successResponse(res, updatedDonHang, 'Cập nhật đơn hàng thành công.');
     } catch (error) {
+      logger.error(`Error in updateDonHang controller: ${error}`);
       next(error);
     }
   },
@@ -83,7 +124,8 @@ const DonHangController = {
   async cancelDonHang(req: Request, res: Response, next: NextFunction) {
     try {
       const maDonHang = parseInt(req.params.id);
-      const { lyDo } = req.body;
+      // Lấy lý do hủy từ request body, hỗ trợ cả hai định dạng
+      const lyDo = req.body.lyDo || req.body.adminNote || req.body.reason || '';
       
       if (isNaN(maDonHang)) {
         return next(new AppError('Mã đơn hàng không hợp lệ.', 400));
@@ -97,6 +139,7 @@ const DonHangController = {
       
       return successResponse(res, cancelledDonHang, 'Hủy đơn hàng thành công.');
     } catch (error) {
+      logger.error(`Error in cancelDonHang controller: ${error}`);
       next(error);
     }
   }
