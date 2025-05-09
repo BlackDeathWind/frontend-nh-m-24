@@ -172,6 +172,20 @@ export const productAPI = {
     }
   },
 
+  // Thêm phương thức mới để lấy sản phẩm cho dashboard
+  getProductsForDashboard: async (params = {}) => {
+    try {
+      const response = await api.get('/san-pham/dashboard', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard products:', error);
+      return {
+        status: 'error',
+        message: 'Không thể tải danh sách sản phẩm cho dashboard',
+      };
+    }
+  },
+
   getBestSellingProducts: async (limit = 10) => {
     try {
       const response = await api.get('/san-pham/ban-chay', { 
@@ -200,13 +214,17 @@ export const productAPI = {
     }
   },
 
-  createProduct: async (productData: FormData) => {
+  createProduct: async (productData: {
+    tenSanPham: string;
+    moTa: string;
+    giaBan: string | number;
+    soLuong: string | number;
+    hinhAnh: string;
+    maDanhMuc: string | number;
+    dacDiemNoiBat?: string;
+  }) => {
     try {
-      const response = await api.post('/san-pham', productData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post('/san-pham', productData);
       return response.data;
     } catch (error) {
       console.error('Create product error:', error);
@@ -214,11 +232,14 @@ export const productAPI = {
     }
   },
 
-  updateProduct: async (id: string, productData: FormData) => {
+  updateProduct: async (id: string, productData: any) => {
     try {
+      // Kiểm tra xem dữ liệu là FormData hay object thường
+      const isFormData = productData instanceof FormData;
+      
       const response = await api.put(`/san-pham/${id}`, productData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
         },
       });
       return response.data;

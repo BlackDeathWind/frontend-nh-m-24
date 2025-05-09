@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import Navbar from './components/layout/navbar';
 import { ToastContainer } from './components/ui/toast-container';
 import { useAuth } from './lib/auth-context';
@@ -22,7 +22,9 @@ import {
   LazyPendingOrders,
   LazyProcessingOrders,
   LazyDeliveredOrders,
-  LazyCancelledOrders
+  LazyCancelledOrders,
+  LazyProductsNew,
+  LazyProductEdit
 } from './lib/lazy-components';
 
 // Component dùng để chuyển hướng dựa trên vai trò
@@ -81,6 +83,8 @@ function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<LazyAdminDashboard />} />
           <Route path="products" element={<LazyProductsManagement />} />
+          <Route path="products/new" element={<LazyProductsNew />} />
+          <Route path="products/:id/edit" element={<LazyProductEdit />} />
           <Route path="orders" element={<LazyOrdersManagement />} />
           <Route path="orders/pending" element={<LazyPendingOrders />} />
           <Route path="orders/processing" element={<LazyProcessingOrders />} />

@@ -68,15 +68,21 @@ const ProductController = {
   // Tạo sản phẩm mới
   async createProduct(req: Request, res: Response, next: NextFunction) {
     try {
-      const { tenSanPham, moTa, giaBan, soLuong, hinhAnh, maDanhMuc } = req.body;
+      // Kiểm tra dữ liệu đầu vào
+      const { tenSanPham, moTa, giaBan, soLuong, maDanhMuc, dacDiemNoiBat, hinhAnh } = req.body;
 
       // Validation
-      if (!tenSanPham || !moTa || !giaBan || !hinhAnh || !maDanhMuc) {
+      if (!tenSanPham || !moTa || !giaBan || !maDanhMuc) {
         return next(new AppError('Vui lòng điền đầy đủ thông tin sản phẩm.', 400));
       }
 
       if (isNaN(Number(giaBan)) || Number(giaBan) <= 0) {
         return next(new AppError('Giá bán phải là số dương.', 400));
+      }
+
+      // Kiểm tra hình ảnh
+      if (!hinhAnh) {
+        return next(new AppError('Vui lòng cung cấp URL hình ảnh cho sản phẩm.', 400));
       }
 
       const productData = {
@@ -85,12 +91,14 @@ const ProductController = {
         GiaBan: Number(giaBan),
         SoLuongTon: Number(soLuong) || 0,
         HinhAnhChinhURL: hinhAnh,
-        MaDanhMuc: Number(maDanhMuc)
+        MaDanhMuc: Number(maDanhMuc),
+        DacDiemNoiBat: dacDiemNoiBat || null
       };
 
       const newProduct = await productService.createProduct(productData);
       return successResponse(res, newProduct, 'Tạo sản phẩm thành công.', 201);
     } catch (error) {
+      logger.error(`Error in createProduct controller: ${error}`);
       next(error);
     }
   },
@@ -99,7 +107,7 @@ const ProductController = {
   async updateProduct(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { tenSanPham, moTa, giaBan, soLuong, hinhAnh, maDanhMuc } = req.body;
+      const { tenSanPham, moTa, giaBan, soLuong, hinhAnh, maDanhMuc, dacDiemNoiBat, trangThai, useRawQuery } = req.body;
 
       const productId = Number(id);
       if (isNaN(productId)) {
@@ -120,8 +128,13 @@ const ProductController = {
       if (soLuong !== undefined) updateData.SoLuongTon = Number(soLuong);
       if (hinhAnh) updateData.HinhAnhChinhURL = hinhAnh;
       if (maDanhMuc) updateData.MaDanhMuc = Number(maDanhMuc);
+      if (dacDiemNoiBat !== undefined) updateData.DacDiemNoiBat = dacDiemNoiBat;
 
-      const updatedProduct = await productService.updateProduct(productId, updateData);
+      // Quyết định sử dụng phương thức nào dựa vào flag useRawQuery
+      const updatedProduct = useRawQuery === 'true' 
+        ? await productService.updateProductWithRawQuery(productId, updateData)
+        : await productService.updateProduct(productId, updateData);
+
       return successResponse(res, updatedProduct, 'Cập nhật sản phẩm thành công.');
     } catch (error) {
       next(error);
@@ -157,6 +170,36 @@ const ProductController = {
 
       const products = await productService.getBestSellingProducts(limitValue);
       return successResponse(res, products, 'Lấy danh sách sản phẩm bán chạy thành công.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Lấy danh sách sản phẩm cho Dashboard
+  async getProductsForDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { 
+        keyword,
+        categoryId,
+        status,
+        sortBy,
+        page,
+        limit
+      } = req.query;
+
+      // Tiền xử lý dữ liệu đầu vào
+      const options = {
+        keyword: keyword as string,
+        categoryId: categoryId ? Number(categoryId) : undefined,
+        status: status as string,
+        sortBy: sortBy as string,
+        page: page ? Number(page) : 1,
+        limit: limit ? Number(limit) : 10
+      };
+
+      const result = await productService.getProductsForDashboard(options);
+      
+      return successResponse(res, result, 'Lấy danh sách sản phẩm cho dashboard thành công.');
     } catch (error) {
       next(error);
     }

@@ -19,6 +19,13 @@ router.get('/', ProductController.getProducts);
 router.get('/ban-chay', ProductController.getBestSellingProducts);
 
 /**
+ * @route   GET /api/san-pham/dashboard
+ * @desc    Lấy danh sách sản phẩm cho Dashboard
+ * @access  Private (Admin, Staff)
+ */
+router.get('/dashboard', protect, restrictTo('Admin', 'NhanVien'), ProductController.getProductsForDashboard);
+
+/**
  * @route   GET /api/san-pham/:id
  * @desc    Lấy chi tiết sản phẩm theo ID
  * @access  Public

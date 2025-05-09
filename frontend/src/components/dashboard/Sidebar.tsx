@@ -67,17 +67,7 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
           title: "Thêm sản phẩm mới",
           path: `${dashboardPrefix}/products/new`,
           permission: true,
-        },
-        {
-          title: "Quản lý danh mục",
-          path: `${dashboardPrefix}/products/categories`,
-          permission: isAdmin, // Only admin can manage categories
-        },
-        {
-          title: "Quản lý tồn kho",
-          path: `${dashboardPrefix}/products/inventory`,
-          permission: true,
-        },
+        }
       ],
     },
     {
