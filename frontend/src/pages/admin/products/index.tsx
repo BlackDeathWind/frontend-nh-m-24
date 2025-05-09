@@ -361,8 +361,10 @@ export default function ProductsManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <Link
-                        to={`/admin/products/${product.id}`}
+                        to={`/products/${product.id}`}
                         className="text-gray-600 hover:text-gray-900"
+                        target="_blank" 
+                        rel="noopener noreferrer"
                       >
                         <ExternalLink className="h-5 w-5" />
                       </Link>

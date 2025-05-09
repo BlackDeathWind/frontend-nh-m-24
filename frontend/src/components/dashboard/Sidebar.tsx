@@ -104,12 +104,6 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
       ],
     },
     {
-      title: "Khách hàng",
-      icon: <Users size={20} />,
-      path: `${dashboardPrefix}/customers`,
-      permission: isAdmin, // Only admin can manage all users
-    },
-    {
       title: "Người dùng",
       icon: <Users size={20} />,
       path: `${dashboardPrefix}/users`,

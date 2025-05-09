@@ -1,285 +1,156 @@
-import { useState, useEffect } from 'react';
-import { ShoppingBag, Users, TrendingUp, DollarSign, AlertTriangle, Package } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { getDashboardData } from '@/lib/data';
-
-interface DashboardData {
-  revenueData: { month: string; value: number }[];
-  topProducts: { name: string; quantity: number; revenue: number }[];
-  recentOrders: { id: string; customer: string; date: string; amount: number; status: string }[];
-  lowStockProducts: { name: string; current: number; min: number }[];
-  dashboardStats: { title: string; value: string; color: string; growth: number }[];
-}
+import { Link } from 'react-router-dom';
+import { 
+  ShoppingBag, 
+  Users, 
+  Package, 
+  TicketCheck, 
+  Settings, 
+  BarChart3,
+  LayoutDashboard
+} from 'lucide-react';
 
 export default function AdminDashboard() {
-  const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month' | 'year'>('month');
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await getDashboardData();
-        if (response.success && response.data) {
-          setDashboardData(response.data);
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải dữ liệu dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, []);
-  
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { 
-      style: 'currency', 
-      currency: 'VND',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
-  // Tính % tăng trưởng so với kỳ trước
-  const calculateGrowth = (current: number, previous: number) => {
-    if (previous === 0) return 100;
-    return ((current - previous) / previous) * 100;
-  };
-
-  // Các icon tương ứng với từng loại thống kê
-  const statIcons = {
-    'Doanh thu tháng này': <DollarSign size={24} />,
-    'Đơn hàng tháng này': <ShoppingBag size={24} />,
-    'Khách hàng mới': <Users size={24} />,
-    'Lượt truy cập': <TrendingUp size={24} />
-  };
-
-  // Nếu đang tải dữ liệu, hiển thị trạng thái loading
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // Nếu không có dữ liệu
-  if (!dashboardData) {
-    return (
-      <div className="text-center py-10">
-        <h2 className="text-xl font-semibold text-gray-700">Không thể tải dữ liệu</h2>
-        <p className="text-gray-500 mt-2">Vui lòng thử lại sau</p>
-      </div>
-    );
-  }
+  // Các chức năng chính
+  const mainFeatures = [
+    {
+      title: "Sản phẩm",
+      description: "Quản lý danh sách sản phẩm, thêm, sửa, xóa sản phẩm",
+      icon: <Package size={48} className="text-blue-600" />,
+      path: "/admin/products",
+      color: "bg-blue-50 border-blue-200"
+    },
+    {
+      title: "Đơn hàng",
+      description: "Xem và quản lý trạng thái đơn hàng",
+      icon: <ShoppingBag size={48} className="text-green-600" />,
+      path: "/admin/orders",
+      color: "bg-green-50 border-green-200"
+    },
+    {
+      title: "Người dùng",
+      description: "Quản lý tài khoản người dùng và phân quyền",
+      icon: <Users size={48} className="text-purple-600" />,
+      path: "/admin/users",
+      color: "bg-purple-50 border-purple-200"
+    },
+    {
+      title: "Thống kê",
+      description: "Xem báo cáo doanh thu và thống kê kinh doanh",
+      icon: <BarChart3 size={48} className="text-amber-600" />,
+      path: "/admin/statistics",
+      color: "bg-amber-50 border-amber-200"
+    },
+    {
+      title: "Hỗ trợ khách hàng",
+      description: "Quản lý yêu cầu hỗ trợ và phản hồi khách hàng",
+      icon: <TicketCheck size={48} className="text-teal-600" />,
+      path: "/admin/support",
+      color: "bg-teal-50 border-teal-200"
+    },
+    {
+      title: "Cài đặt",
+      description: "Cấu hình hệ thống và thông tin cửa hàng",
+      icon: <Settings size={48} className="text-gray-600" />,
+      path: "/admin/settings",
+      color: "bg-gray-50 border-gray-200"
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div className="bg-white rounded-md shadow p-1 flex">
-          <button 
-            className={cn(
-              "px-3 py-1 text-sm rounded-md",
-              timeRange === 'day' 
-                ? "bg-blue-100 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100"
-            )}
-            onClick={() => setTimeRange('day')}
-          >
-            Ngày
-          </button>
-          <button 
-            className={cn(
-              "px-3 py-1 text-sm rounded-md",
-              timeRange === 'week' 
-                ? "bg-blue-100 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100"
-            )}
-            onClick={() => setTimeRange('week')}
-          >
-            Tuần
-          </button>
-          <button 
-            className={cn(
-              "px-3 py-1 text-sm rounded-md",
-              timeRange === 'month' 
-                ? "bg-blue-100 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100"
-            )}
-            onClick={() => setTimeRange('month')}
-          >
-            Tháng
-          </button>
-          <button 
-            className={cn(
-              "px-3 py-1 text-sm rounded-md",
-              timeRange === 'year' 
-                ? "bg-blue-100 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100"
-            )}
-            onClick={() => setTimeRange('year')}
-          >
-            Năm
-          </button>
+    <div className="space-y-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tổng quan</h1>
+          <p className="text-gray-500 mt-2">Chào mừng bạn đến với hệ thống quản trị website</p>
         </div>
       </div>
 
-      {/* Thống kê tổng quan */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardData.dashboardStats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-bold mt-1">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full bg-${stat.color}-100 text-${stat.color}-600`}>
-                {statIcons[stat.title as keyof typeof statIcons] || <TrendingUp size={24} />}
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <span className={stat.growth >= 0 ? "text-green-600" : "text-red-600"}>
-                {stat.growth >= 0 ? "+" : ""}{stat.growth.toFixed(1)}%
-              </span>
-              <span className="text-gray-500 text-sm ml-2">so với kỳ trước</span>
-            </div>
+      {/* Thông báo */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+        <div className="flex items-start">
+          <div className="flex-shrink-0 pt-0.5">
+            <LayoutDashboard className="h-5 w-5 text-blue-500" />
           </div>
-        ))}
-      </div>
-
-      {/* Biểu đồ doanh thu và sản phẩm bán chạy */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Biểu đồ doanh thu</h2>
-            <select className="text-sm border border-gray-300 rounded-md p-1">
-              <option>12 tháng gần nhất</option>
-              <option>6 tháng gần nhất</option>
-              <option>3 tháng gần nhất</option>
-            </select>
-          </div>
-          
-          {/* Biểu đồ doanh thu */}
-          <div className="h-80 w-full">
-            <div className="flex items-end justify-between h-64 w-full">
-              {dashboardData.revenueData.map((item, index) => (
-                <div key={index} className="flex flex-col items-center w-full">
-                  <div 
-                    className="bg-blue-500 rounded-t-sm w-6"
-                    style={{ height: `${Math.max((item.value / 5000000) * 100, 10)}%` }}
-                  ></div>
-                  <span className="text-xs mt-2 text-gray-600">{item.month}</span>
-                </div>
-              ))}
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">Chú ý</h3>
+            <div className="mt-1 text-sm text-blue-700">
+              <p>
+                Đây là trang tổng quan quản trị. Sử dụng các liên kết dưới đây để truy cập vào các chức năng quản lý.
+              </p>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-medium mb-4">Sản phẩm bán chạy</h2>
-          
-          <div className="space-y-4">
-            {dashboardData.topProducts.slice(0, 5).map((product, index) => (
-              <div key={index} className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 font-medium">
-                  {index + 1}
+      {/* Các chức năng chính */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-6">Chức năng quản trị</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {mainFeatures.map((feature, index) => (
+            <Link 
+              key={index}
+              to={feature.path}
+              className={`block p-6 border rounded-lg shadow-sm transition-all duration-200 
+              hover:shadow-md ${feature.color} border hover:-translate-y-1`}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4">
+                  {feature.icon}
                 </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-gray-500">{product.quantity} sản phẩm</p>
-                </div>
-                <p className="text-sm font-medium">{formatCurrency(product.revenue)}</p>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
               </div>
+            </Link>
             ))}
-          </div>
-          
-          <button className="mt-4 text-blue-600 text-sm font-medium hover:underline w-full text-center">
-            Xem tất cả sản phẩm
-          </button>
         </div>
       </div>
 
-      {/* Đơn hàng gần đây và cảnh báo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-          <h2 className="text-lg font-medium mb-4">Đơn hàng gần đây</h2>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã đơn</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {dashboardData.recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{order.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(order.amount)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={cn(
-                        "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                        order.status === 'completed' && "bg-green-100 text-green-800",
-                        order.status === 'processing' && "bg-blue-100 text-blue-800",
-                        order.status === 'pending' && "bg-yellow-100 text-yellow-800",
-                        order.status === 'cancelled' && "bg-red-100 text-red-800",
-                      )}>
-                        {order.status === 'completed' && 'Hoàn thành'}
-                        {order.status === 'processing' && 'Đang xử lý'}
-                        {order.status === 'pending' && 'Chờ xác nhận'}
-                        {order.status === 'cancelled' && 'Đã hủy'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          <button className="mt-4 text-blue-600 text-sm font-medium hover:underline w-full text-center">
-            Xem tất cả đơn hàng
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium">Cảnh báo tồn kho</h2>
-            <div className="text-red-500 bg-red-50 rounded-full p-1">
-              <AlertTriangle size={20} />
+      {/* Tài liệu hướng dẫn */}
+      <div className="bg-white rounded-lg shadow p-6 mt-8">
+        <h2 className="text-lg font-medium mb-4">Tài liệu hướng dẫn</h2>
+        <div className="space-y-4">
+          <div className="flex items-start">
+            <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">1</div>
+            <div>
+              <h3 className="font-medium">Quản lý sản phẩm</h3>
+              <p className="text-gray-600 text-sm">Hướng dẫn thêm, sửa, xóa và quản lý sản phẩm trong hệ thống</p>
             </div>
           </div>
-          
-          <div className="space-y-4">
-            {dashboardData.lowStockProducts.map((product, index) => (
-              <div key={index} className="flex items-start">
-                <div className="p-2 rounded-md bg-red-50 text-red-500">
-                  <Package size={18} />
-                </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-gray-500">
-                    Còn {product.current}/{product.min} sản phẩm
-                  </p>
-                </div>
-                <button className="text-sm text-blue-600 hover:underline">
-                  Đặt hàng
-                </button>
-              </div>
-            ))}
+          <div className="flex items-start">
+            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">2</div>
+            <div>
+              <h3 className="font-medium">Quản lý đơn hàng</h3>
+              <p className="text-gray-600 text-sm">Hướng dẫn xử lý đơn hàng và cập nhật trạng thái</p>
+            </div>
           </div>
-          
-          <button className="mt-4 text-blue-600 text-sm font-medium hover:underline w-full text-center">
-            Xem tất cả cảnh báo
-          </button>
+          <div className="flex items-start">
+            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mr-3">3</div>
+            <div>
+              <h3 className="font-medium">Báo cáo doanh thu</h3>
+              <p className="text-gray-600 text-sm">Hướng dẫn xem và xuất báo cáo doanh thu theo thời gian</p>
+            </div>
+        </div>
+          <div className="flex items-start">
+            <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-3">4</div>
+            <div>
+              <h3 className="font-medium">Quản lý người dùng</h3>
+              <p className="text-gray-600 text-sm">Hướng dẫn thêm và phân quyền người dùng trong hệ thống</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 mr-3">5</div>
+            <div>
+              <h3 className="font-medium">Hỗ trợ khách hàng</h3>
+              <p className="text-gray-600 text-sm">Hướng dẫn trả lời và quản lý các yêu cầu hỗ trợ từ khách hàng</p>
+                </div>
+                </div>
+          <div className="flex items-start">
+            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 mr-3">6</div>
+            <div>
+              <h3 className="font-medium">Cài đặt hệ thống</h3>
+              <p className="text-gray-600 text-sm">Hướng dẫn cấu hình thông tin cửa hàng và tùy chỉnh giao diện</p>
+              </div>
+          </div>
         </div>
       </div>
     </div>
