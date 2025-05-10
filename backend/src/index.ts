@@ -142,7 +142,7 @@ app.get('/', (req: Request, res: Response) => {
           
           <h3>Tài khoản mẫu (Chế độ phát triển)</h3>
           <p><strong>Admin:</strong> email: admin@example.com | password: Admin123!</p>
-          <p><strong>Nhân viên:</strong> email: seller@example.com | password: Seller123!</p>
+          <p><strong>Nhân viên:</strong> email: nhanvien@example.com | password: Nhanvien1!</p>
         </div>
         
         <h2>API Endpoints</h2>
@@ -300,6 +300,12 @@ app.get('/', (req: Request, res: Response) => {
               <span class="role">admin</span>
               <span class="role">nhân viên</span>
             </div>
+            <div class="endpoint">
+              <span class="method post">POST</span>
+              <span>/api/don-hang/:id/cancel</span> - Hủy đơn hàng
+              <span class="role">admin</span>
+              <span class="role">nhân viên</span>
+            </div>
           </div>
         </div>
         
@@ -308,7 +314,7 @@ app.get('/', (req: Request, res: Response) => {
           <div class="endpoints">
             <div class="endpoint">
               <span class="method get">GET</span>
-              <span>/api/danh-gia</span> - Lấy danh sách đánh giá
+              <span>/api/danh-gia/product/:productId</span> - Lấy danh sách đánh giá của sản phẩm
             </div>
             <div class="endpoint">
               <span class="method get">GET</span>
@@ -340,7 +346,10 @@ app.get('/', (req: Request, res: Response) => {
               <span class="method">Authentication</span> - Xác thực WebSocket với JWT
             </div>
             <div class="endpoint">
-              <span class="method">Notifications</span> - Nhận thông báo real-time
+              <span class="method">Notifications</span> - Nhận thông báo real-time về trạng thái đơn hàng
+            </div>
+            <div class="endpoint">
+              <span class="method">Chat</span> - Giao tiếp trực tiếp giữa khách hàng và nhân viên hỗ trợ
             </div>
           </div>
         </div>

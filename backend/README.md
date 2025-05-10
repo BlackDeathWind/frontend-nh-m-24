@@ -2,6 +2,8 @@
 
 Backend API cho ứng dụng E-commerce với Node.js, Express, WebSocket và SQL Server.
 
+Code bởi Phạm Nguyễn Chu Nguyên - 21050043
+
 ## Công nghệ sử dụng
 
 - **Framework**: Node.js với Express.js
@@ -233,9 +235,26 @@ npm run build
 npm start
 ```
 
+### Chế độ phát triển đơn giản
+
+Để chạy ứng dụng trong chế độ phát triển mà không cần cài đặt Redis và SQL Server, bạn có thể sử dụng biến môi trường `SKIP_REDIS` và `SKIP_DB`:
+
+```bash
+# Thiết lập trong file .env
+SKIP_REDIS=true
+
+# Hoặc khi chạy ứng dụng
+SKIP_REDIS=true npm run dev
+```
+
+Khi chạy ở chế độ này:
+- Hệ thống sẽ bỏ qua việc kết nối Redis, không hỗ trợ các tính năng session và cache
+- WebSocket vẫn hoạt động nhưng không có tính năng lưu trữ session
+- Vẫn yêu cầu kết nối đến SQL Server để lưu trữ dữ liệu
+
 ## API Endpoints
 
-### Authentication
+### Xác thực (Authentication)
 
 - `POST /api/auth/register` - Đăng ký tài khoản mới
 - `POST /api/auth/login` - Đăng nhập
@@ -243,34 +262,64 @@ npm start
 - `GET /api/auth/profile` - Lấy thông tin người dùng hiện tại
 - `PUT /api/auth/profile` - Cập nhật thông tin người dùng
 
-### Products
+### Khách hàng
 
-- `GET /api/products` - Lấy danh sách sản phẩm
-- `GET /api/products/:id` - Lấy thông tin chi tiết sản phẩm
-- `POST /api/products` - Tạo sản phẩm mới (yêu cầu quyền admin hoặc seller)
-- `PUT /api/products/:id` - Cập nhật sản phẩm (yêu cầu quyền admin hoặc seller)
-- `DELETE /api/products/:id` - Xóa sản phẩm (yêu cầu quyền admin hoặc seller)
+- `POST /api/khach-hang/register` - Đăng ký khách hàng mới
+- `POST /api/khach-hang/login` - Đăng nhập
+- `GET /api/khach-hang/profile` - Lấy thông tin cá nhân (yêu cầu đăng nhập)
+- `PUT /api/khach-hang/:id` - Cập nhật thông tin khách hàng (yêu cầu đăng nhập)
+- `GET /api/khach-hang` - Lấy danh sách khách hàng (yêu cầu quyền admin)
+- `GET /api/khach-hang/:id` - Lấy thông tin chi tiết khách hàng (yêu cầu quyền admin)
+- `POST /api/khach-hang/:id/deactivate` - Vô hiệu hóa khách hàng (yêu cầu quyền admin)
 
-### Categories
+### Nhân viên
 
-- `GET /api/categories` - Lấy danh sách danh mục
-- `GET /api/categories/:id` - Lấy thông tin chi tiết danh mục
-- `POST /api/categories` - Tạo danh mục mới (yêu cầu quyền admin)
-- `PUT /api/categories/:id` - Cập nhật danh mục (yêu cầu quyền admin)
-- `DELETE /api/categories/:id` - Xóa danh mục (yêu cầu quyền admin)
+- `GET /api/nhan-vien` - Lấy danh sách nhân viên (yêu cầu quyền admin)
+- `GET /api/nhan-vien/:id` - Lấy thông tin chi tiết nhân viên (yêu cầu quyền admin)
+- `POST /api/nhan-vien` - Tạo nhân viên mới (yêu cầu quyền admin)
+- `PUT /api/nhan-vien/:id` - Cập nhật thông tin nhân viên (yêu cầu quyền admin)
+- `POST /api/nhan-vien/:id/deactivate` - Vô hiệu hóa nhân viên (yêu cầu quyền admin)
 
-### Orders
+### Sản phẩm
 
-- `GET /api/orders` - Lấy danh sách đơn hàng của người dùng hiện tại
-- `GET /api/orders/:id` - Lấy thông tin chi tiết đơn hàng
-- `POST /api/orders` - Tạo đơn hàng mới
-- `PUT /api/orders/:id/status` - Cập nhật trạng thái đơn hàng (yêu cầu quyền admin hoặc seller)
+- `GET /api/san-pham` - Lấy danh sách sản phẩm
+- `GET /api/san-pham/ban-chay` - Lấy danh sách sản phẩm bán chạy
+- `GET /api/san-pham/dashboard` - Lấy danh sách sản phẩm cho Dashboard (yêu cầu quyền admin/nhân viên)
+- `GET /api/san-pham/:id` - Lấy thông tin chi tiết sản phẩm
+- `POST /api/san-pham` - Tạo sản phẩm mới (yêu cầu quyền admin/nhân viên)
+- `PUT /api/san-pham/:id` - Cập nhật sản phẩm (yêu cầu quyền admin/nhân viên)
+- `DELETE /api/san-pham/:id` - Xóa sản phẩm (yêu cầu quyền admin)
 
-## WebSocket Events
+### Danh mục
 
-- Connection: Thiết lập kết nối với server
-- Authentication: Xác thực WebSocket với JWT
-- Notifications: Nhận thông báo real-time
+- `GET /api/danh-muc` - Lấy danh sách danh mục
+- `GET /api/danh-muc/:id` - Lấy thông tin chi tiết danh mục
+- `POST /api/danh-muc` - Tạo danh mục mới (yêu cầu quyền admin)
+- `PUT /api/danh-muc/:id` - Cập nhật danh mục (yêu cầu quyền admin)
+- `DELETE /api/danh-muc/:id` - Xóa danh mục (yêu cầu quyền admin)
+
+### Đơn hàng
+
+- `GET /api/don-hang` - Lấy danh sách đơn hàng (yêu cầu quyền admin/nhân viên)
+- `GET /api/don-hang/:id` - Lấy thông tin chi tiết đơn hàng (yêu cầu đăng nhập)
+- `POST /api/don-hang` - Tạo đơn hàng mới (yêu cầu đăng nhập)
+- `PATCH /api/don-hang/:id` - Cập nhật trạng thái đơn hàng (yêu cầu quyền admin/nhân viên)
+- `POST /api/don-hang/:id/cancel` - Hủy đơn hàng (yêu cầu quyền admin/nhân viên)
+
+### Đánh giá
+
+- `GET /api/danh-gia/product/:productId` - Lấy danh sách đánh giá của sản phẩm
+- `GET /api/danh-gia/:id` - Lấy thông tin chi tiết đánh giá
+- `POST /api/danh-gia` - Tạo đánh giá mới (yêu cầu đăng nhập)
+- `PUT /api/danh-gia/:id` - Cập nhật đánh giá (yêu cầu quyền chủ sở hữu)
+- `DELETE /api/danh-gia/:id` - Xóa đánh giá (yêu cầu quyền chủ sở hữu hoặc admin)
+
+### WebSocket Events
+
+- **Connection** - Thiết lập kết nối với server
+- **Authentication** - Xác thực WebSocket với JWT
+- **Notifications** - Nhận thông báo real-time về trạng thái đơn hàng
+- **Chat** - Giao tiếp trực tiếp giữa khách hàng và nhân viên hỗ trợ
 
 ## Tính năng
 

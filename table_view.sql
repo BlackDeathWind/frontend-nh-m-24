@@ -26,9 +26,11 @@ SELECT * FROM vw_SanPham_DanhGia;
 
 -- Xem dữ liệu từ view DonHang
 SELECT * FROM vw_DonHang;
+SELECT * FROM DonHang;
 
 -- Xem dữ liệu từ view ChiTietDonHang
 SELECT * FROM vw_ChiTietDonHang;
+SELECT * FROM ChiTietDonHang;
 
 -- Xem dữ liệu từ view DonHang đầy đủ
 SELECT * FROM vw_DonHang_ChiTiet;

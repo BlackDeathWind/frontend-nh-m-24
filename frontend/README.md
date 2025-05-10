@@ -2,7 +2,7 @@
 
 Frontend cho ứng dụng E-commerce phân phối văn phòng phẩm hiện đại, được xây dựng với React, TypeScript và Tailwind CSS.
 
-Code bởi Phạm Nguyễn Chu Nguyên - 21050043
+
 ## Công nghệ sử dụng
 
 - **Framework**: React với TypeScript
@@ -56,30 +56,25 @@ frontend/
 │   │   │
 │   │   ├── admin/               # Trang quản trị
 │   │   │   ├── dashboard.tsx    # Dashboard quản trị
-│   │   │   ├── products/        # Quản lý sản phẩm
-│   │   │   ├── orders/          # Quản lý đơn hàng
-│   │   │   ├── users/           # Quản lý người dùng
-│   │   │   ├── analytics/       # Phân tích dữ liệu
-│   │   │   ├── support/         # Hỗ trợ khách hàng
-│   │   │   ├── settings/        # Cài đặt hệ thống
-│   │   │   └── dashboard/       # Chi tiết dashboard
+│   │   │   └── products.tsx     # Quản lý sản phẩm
 │   │   │
 │   │   ├── seller/              # Trang dành cho người bán
-│   │   │   ├── dashboard.tsx    # Dashboard người bán
-│   │   │   ├── products/        # Quản lý sản phẩm của người bán
-│   │   │   ├── orders/          # Đơn hàng liên quan
-│   │   │   ├── analytics/       # Phân tích dữ liệu bán hàng
-│   │   │   ├── support/         # Hỗ trợ người mua
-│   │   │   └── dashboard/       # Chi tiết dashboard
+│   │   │   └── dashboard.tsx    # Dashboard người bán
 │   │   │
 │   │   ├── home.tsx             # Trang chủ
 │   │   ├── products.tsx         # Trang danh sách sản phẩm
 │   │   ├── product-detail.tsx   # Trang chi tiết sản phẩm
 │   │   ├── cart.tsx             # Trang giỏ hàng
-│   │   └── checkout.tsx         # Trang thanh toán
+│   │   ├── checkout.tsx         # Trang thanh toán
+│   │   └── invoice/[id].tsx     # Trang hóa đơn
 │   │
 │   ├── styles/                  # CSS và style
+│   │   └── home.module.css      # CSS module cho trang chủ
+│   │   └── products.module.css  # CSS module cho trang sản phẩm
+│   │
 │   ├── animations/              # Hiệu ứng chuyển động
+│   │   └── variants.ts          # Các variants cho Framer Motion
+│   │
 │   ├── App.tsx                  # Component chính
 │   ├── main.tsx                 # Entry point
 │   └── index.css                # CSS toàn cục
@@ -109,20 +104,24 @@ Frontend sử dụng React Context API để quản lý state toàn cục, giúp
    - Lưu trữ thông tin đăng nhập và token JWT
    - Xử lý đăng nhập, đăng ký, đăng xuất
    - Tự động khôi phục phiên đăng nhập từ localStorage
+   - Phân quyền người dùng (admin, nhân viên, khách hàng)
    - Cung cấp thông tin người dùng hiện tại cho toàn bộ ứng dụng
 
 2. **CartContext**: Quản lý giỏ hàng
    - Thêm, xóa, cập nhật sản phẩm trong giỏ hàng
    - Tính toán số lượng và tổng giá trị giỏ hàng
-   - Lưu trữ giỏ hàng khi người dùng rời trang
+   - Kiểm tra số lượng tồn kho
+   - Xóa toàn bộ giỏ hàng sau khi đặt hàng thành công
 
 3. **NotificationContext**: Quản lý thông báo
    - Hiển thị toast messages sau các thao tác
-   - Cung cấp API đơn giản để hiển thị thông báo thành công, lỗi, cảnh báo
+   - Hỗ trợ các loại thông báo: success, error, warning, info
+   - Tự động ẩn thông báo sau một khoảng thời gian
+   - API đơn giản để sử dụng trong toàn bộ ứng dụng
 
 ### API Communication
 
-Tương tác với backend được xử lý thông qua lớp API service tập trung:
+Tương tác với backend được xử lý thông qua module api.ts tập trung:
 
 1. **Axios Instance**: Cấu hình chung cho tất cả API requests
    - Tự động gắn token JWT vào header
@@ -130,15 +129,18 @@ Tương tác với backend được xử lý thông qua lớp API service tập 
    - Định dạng response
 
 2. **API Services**:
-   - **authAPI**: Xử lý các yêu cầu xác thực
-   - **productAPI**: Tương tác với các endpoint sản phẩm
-   - **orderAPI**: Quản lý đơn hàng
-   - **cartAPI**: Đồng bộ giỏ hàng với backend
+   - **authAPI**: Xử lý các yêu cầu xác thực (đăng nhập, đăng ký, lấy thông tin)
+   - **productAPI**: Tương tác với các endpoint sản phẩm (danh sách, chi tiết)
+   - **categoryAPI**: Quản lý danh mục sản phẩm
+   - **orderAPI**: Quản lý đơn hàng (tạo, cập nhật, hủy)
+   - **reviewAPI**: Quản lý đánh giá sản phẩm
+   - **customerAPI**: Quản lý thông tin khách hàng
+   - **staffAPI**: Quản lý nhân viên (admin only)
    - **dashboardAPI**: Lấy dữ liệu cho dashboard
 
 ### Routing và Navigation
 
-Điều hướng được xử lý bởi React Router v6 với các tính năng nâng cao:
+Điều hướng được xử lý bởi React Router v6 với các tính năng:
 
 1. **Route Protection**: Bảo vệ các route yêu cầu đăng nhập hoặc quyền cụ thể
    - Chuyển hướng người dùng chưa đăng nhập đến trang login
@@ -148,9 +150,11 @@ Tương tác với backend được xử lý thông qua lớp API service tập 
    - Tải không đồng bộ các components khi cần thiết
    - Hiển thị loading state trong quá trình tải
 
-3. **Breadcrumb Navigation**: Giúp người dùng định vị vị trí hiện tại
-   - Tự động cập nhật dựa trên route hiện tại
-   - Hỗ trợ điều hướng ngược lại
+3. **Tổ chức Route**:
+   - Routes công khai: Home, Products, Cart,...
+   - Routes yêu cầu đăng nhập: Profile, Checkout, Invoice
+   - Routes Admin: Dashboard, quản lý sản phẩm, đơn hàng
+   - Routes Nhân viên: Dashboard bán hàng
 
 ### UI Components và Styling
 
@@ -161,69 +165,77 @@ Frontend sử dụng Tailwind CSS kết hợp với các components tùy chỉnh
    - Tùy chỉnh hoàn toàn theo thiết kế và brand identity
    - Responsive trên mọi kích thước màn hình
 
-2. **Layout Components**:
-   - Navbar: Điều hướng chính và hiển thị thông tin người dùng
-   - DashboardLayout: Giao diện quản trị với sidebar và header
+2. **Animations**:
+   - Sử dụng Framer Motion cho hiệu ứng chuyển động mượt mà
+   - Tối ưu hóa hiệu suất với các lazy animations
+   - Các variants cho các loại chuyển động khác nhau
 
-3. **Advanced UI Elements**:
-   - Dialog: Hiển thị thông báo xác nhận
-   - Toast: Thông báo tạm thời
-   - Forms: Các input fields với validation
+3. **CSS Modules**:
+   - Styling cụ thể cho từng trang/component
+   - Tránh xung đột CSS giữa các components
+   - Kết hợp với Tailwind để tạo UI nhất quán
 
-### Trang người dùng
+### Trang Người Dùng
 
-Các trang chính cho người mua hàng:
+1. **Home (home.tsx)**:
+   - Hiển thị banner hero với hiệu ứng parallax
+   - Giới thiệu danh mục sản phẩm với animations
+   - Các phần call-to-action để chuyển hướng đến sản phẩm
 
-1. **Home**: Trang chủ với banner, sản phẩm nổi bật, danh mục
-   - Hiển thị sản phẩm mới và bán chạy
-   - Tính năng tìm kiếm nhanh
-   - Responsive slider với Framer Motion
+2. **Product Listing (products.tsx)**:
+   - Hiển thị danh sách sản phẩm với bộ lọc
+   - Tìm kiếm sản phẩm theo từ khóa
+   - Lọc theo danh mục, giá
+   - Sắp xếp theo giá, mức độ phổ biến
+   - Hiệu ứng loading và empty state
 
-2. **Product Listing**: Hiển thị danh sách sản phẩm với bộ lọc
-   - Lọc theo danh mục, giá, đánh giá
-   - Tìm kiếm với debounce
-   - Phân trang kết quả
+3. **Product Detail (product-detail.tsx)**:
+   - Hiển thị chi tiết sản phẩm với hình ảnh
+   - Thông tin giá, số lượng tồn kho
+   - Đánh giá sản phẩm
+   - Thêm vào giỏ hàng với hiệu ứng animation
 
-3. **Product Detail**: Chi tiết sản phẩm với hình ảnh, mô tả
-   - Gallery hình ảnh sản phẩm
-   - Thêm vào giỏ hàng với số lượng
-   - Hiển thị đánh giá và đánh giá trung bình
-
-4. **Cart**: Trang giỏ hàng
+4. **Cart (cart.tsx)**:
+   - Hiển thị sản phẩm trong giỏ hàng
    - Cập nhật số lượng sản phẩm
    - Xóa sản phẩm khỏi giỏ hàng
-   - Tính toán tổng tiền và chiết khấu
+   - Tính toán tổng tiền, phí vận chuyển
+   - Áp dụng mã giảm giá
+   - Nút chuyển đến trang thanh toán
 
-5. **Checkout**: Quy trình thanh toán
-   - Form địa chỉ giao hàng
-   - Chọn phương thức thanh toán
+5. **Checkout (checkout.tsx)**:
+   - Form thông tin giao hàng
+   - Chọn phương thức thanh toán (COD hoặc ví điện tử)
    - Xác nhận đơn hàng
+   - Validation thông tin người dùng
+   - Tóm tắt đơn hàng trước khi thanh toán
 
-### Admin Dashboard
+6. **Invoice (invoice/[id].tsx)**:
+   - Hiển thị chi tiết hóa đơn sau khi đặt hàng
+   - Thông tin người nhận, sản phẩm, giá
+   - Trạng thái đơn hàng
+   - In hóa đơn hoặc tải xuống PDF
+   - Thông tin dự kiến giao hàng
 
-Giao diện quản trị cho người quản lý:
+7. **Authentication (auth/*)**: 
+   - Đăng nhập (login.tsx): Form đăng nhập với validation
+   - Đăng ký (register.tsx): Form đăng ký tài khoản mới
+   - Hồ sơ (profile.tsx): Xem và cập nhật thông tin cá nhân
 
-1. **Admin Dashboard**: Tổng quan về hệ thống
-   - Biểu đồ doanh thu và đơn hàng
-   - Thống kê sản phẩm bán chạy
-   - Đơn hàng mới nhất
+### Tính năng Dashboard
 
-2. **Product Management**: Quản lý sản phẩm
-   - Thêm, sửa, xóa sản phẩm
-   - Upload hình ảnh sản phẩm
-   - Quản lý danh mục
+1. **Admin Dashboard**:
+   - Tổng quan về doanh số, đơn hàng
+   - Quản lý sản phẩm (thêm, sửa, xóa)
+   - Quản lý đơn hàng (xem, cập nhật trạng thái)
+   - Quản lý người dùng/khách hàng
 
-3. **Order Management**: Quản lý đơn hàng
-   - Xem chi tiết đơn hàng
-   - Cập nhật trạng thái đơn hàng
-   - Tìm kiếm và lọc đơn hàng
+2. **Seller Dashboard**:
+   - Tổng quan về bán hàng
+   - Xem và xử lý đơn hàng mới
+   - Quản lý sản phẩm được phân công
 
-4. **User Management**: Quản lý người dùng
-   - Danh sách khách hàng và admin
-   - Kích hoạt/vô hiệu hóa tài khoản
-   - Phân quyền người dùng
-
-## Cài đặt
+## Cài đặt và Sử dụng
 
 ### Yêu cầu
 
@@ -266,67 +278,60 @@ yarn build
 yarn preview
 ```
 
-## Tính năng chính
-
-- **Responsive Design**: Giao diện thích ứng với tất cả các kích thước màn hình
-- **Theme**: Thiết kế hiện đại và đồng nhất
-- **Routing**: Điều hướng liền mạch giữa các trang
-- **Authentication**: Đăng nhập, đăng ký và quản lý phiên
-- **Role-based Access**: Phân quyền dựa trên vai trò (user, seller, admin)
-- **Cart Management**: Quản lý giỏ hàng trực quan
-- **Checkout Process**: Quy trình thanh toán đơn giản
-- **Admin Dashboard**: Bảng điều khiển quản trị toàn diện
-- **Seller Dashboard**: Giao diện quản lý sản phẩm cho người bán
-
-## Vai trò người dùng
-
-Ứng dụng hỗ trợ 3 vai trò người dùng với các quyền khác nhau:
-
-### User
-- Xem sản phẩm
-- Thêm sản phẩm vào giỏ hàng
-- Đặt hàng
-- Xem lịch sử đơn hàng
-
-### Seller
-- Tất cả quyền của User
-- Truy cập vào Seller Dashboard
-- Quản lý sản phẩm (thêm, sửa, xóa)
-- Xem đơn hàng liên quan đến sản phẩm của mình
-
-### Admin
-- Tất cả quyền của Seller
-- Truy cập vào Admin Dashboard
-- Quản lý danh mục sản phẩm
-- Quản lý tất cả sản phẩm
-- Quản lý người dùng
-- Quản lý tất cả đơn hàng
-
-## Context API
-
-Ứng dụng sử dụng React Context API để quản lý state toàn cục:
-
-- **AuthContext**: Quản lý xác thực và thông tin người dùng
-- **CartContext**: Quản lý giỏ hàng
-- **NotificationContext**: Quản lý thông báo và toast messages
-
-## Kết nối với Backend
-
-Frontend kết nối với Backend thông qua RESTful API sử dụng Axios. Các API endpoint được cấu hình trong `src/lib/api.ts`.
-
-### Xác thực
-
-- Sử dụng JWT token được lưu trữ trong localStorage
-- Token được gửi kèm với mỗi request trong header Authorization
-
 ## Tài khoản mẫu
 
-Bạn có thể sử dụng các tài khoản mẫu sau để đăng nhập và trải nghiệm các tính năng khác nhau:
+Dưới đây là một số tài khoản mẫu để test ứng dụng:
 
-### Admin
-- **Email**: admin@example.com
-- **Password**: Admin123!
+1. **Admin**:
+   - Email: admin@example.com
+   - Password: Admin123!
 
-### Seller
-- **Email**: seller@example.com
-- **Password**: Seller123! 
+2. **Nhân viên**:
+   - Email: nhanvien@example.com
+   - Password: Nhanvien1!
+
+3. **Khách hàng**:
+   - Email: khachhang@example.com
+   - Password: Khachhang1!
+
+## Tính năng nổi bật
+
+1. **UI/UX Hiện đại**: 
+   - Animations mượt mà với Framer Motion
+   - Responsive trên tất cả thiết bị
+   - Giao diện trực quan, dễ sử dụng
+
+2. **Hiệu suất**:
+   - Lazy loading các components
+   - Code-splitting để giảm kích thước bundle
+   - Tối ưu hóa rendering với React hooks
+
+3. **Tích hợp Backend**:
+   - API chuẩn hóa, dễ mở rộng
+   - Xử lý lỗi thông minh
+   - Caching dữ liệu để tối ưu hiệu suất
+
+4. **Bảo mật**:
+   - JWT Authentication
+   - Route protection
+   - Input validation
+
+5. **Tính năng E-commerce**:
+   - Giỏ hàng đầy đủ tính năng
+   - Quy trình thanh toán mượt mà
+   - Đánh giá sản phẩm
+   - Lọc và tìm kiếm sản phẩm
+   - Theo dõi đơn hàng
+
+## Liên kết với Backend
+
+Frontend này được thiết kế để làm việc cùng với backend API Node.js + Express. API endpoints được định nghĩa trong file `api.ts` và phù hợp với cấu trúc backend.
+
+Tất cả các API calls đều thông qua Axios instance được cấu hình. Backend cần cung cấp các endpoints sau:
+
+1. **Authentication**: /api/auth/*, /api/khach-hang/*, /api/nhan-vien/*
+2. **Products**: /api/san-pham/*, /api/danh-muc/*
+3. **Orders**: /api/don-hang/*
+4. **Reviews**: /api/danh-gia/*
+
+Vui lòng tham khảo tài liệu backend để biết thêm chi tiết về API. 
