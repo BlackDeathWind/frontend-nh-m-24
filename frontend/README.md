@@ -245,9 +245,9 @@ Frontend sử dụng Tailwind CSS kết hợp với các components tùy chỉnh
 ### Bước 1: Cài đặt dependencies
 
 ```bash
+cd frontend
+# Tiếp theo
 npm install
-# hoặc
-yarn install
 ```
 
 ### Bước 2: Cấu hình biến môi trường

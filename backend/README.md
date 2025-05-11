@@ -203,6 +203,8 @@ Backend áp dụng nhiều lớp bảo mật:
 ### Bước 1: Cài đặt dependencies
 
 ```bash
+cd backend
+# Tiếp theo
 npm install
 ```
 
