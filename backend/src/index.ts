@@ -142,7 +142,7 @@ app.get('/', (req: Request, res: Response) => {
           
           <h3>Tài khoản mẫu (Chế độ phát triển)</h3>
           <p><strong>Admin:</strong> email: admin@example.com | password: Admin123!</p>
-          <p><strong>Nhân viên:</strong> email: nhanvien@example.com | password: Nhanvien1!</p>
+          <p><strong>Nhân viên:</strong> email: nhanvien1@example.com | password: Nhanvien1!</p>
         </div>
         
         <h2>API Endpoints</h2>

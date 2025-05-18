@@ -287,7 +287,7 @@ Dưới đây là một số tài khoản mẫu để test ứng dụng:
    - Password: Admin123!
 
 2. **Nhân viên**:
-   - Email: nhanvien@example.com
+   - Email: nhanvien1@example.com
    - Password: Nhanvien1!
 
 3. **Khách hàng**:
