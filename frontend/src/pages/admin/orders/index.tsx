@@ -15,6 +15,7 @@ import {
   Package
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 
 interface Order {
   MaDonHang: number;
@@ -34,6 +35,16 @@ interface Order {
   TrangThaiDonHang: string;
 }
 
+// Định nghĩa interface cho alert dialog
+interface ConfirmDialogState {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmText: string;
+  action: () => Promise<void>;
+  variant: 'danger' | 'default';
+}
+
 export default function OrdersManagement() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +52,16 @@ export default function OrdersManagement() {
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // State cho confirm dialog
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
+    open: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    action: async () => {},
+    variant: 'default',
+  });
   
   const { showNotification } = useNotification();
   const navigate = useNavigate();
@@ -86,7 +107,13 @@ export default function OrdersManagement() {
       });
       
       if (response.status === 'success') {
-        showNotification('success', 'Cập nhật trạng thái đơn hàng thành công');
+        let message = 'Cập nhật trạng thái đơn hàng thành công';
+        if (newStatus === 'DangXuLy') message = 'Đã xác nhận đơn hàng thành công';
+        if (newStatus === 'DaXacNhan') message = 'Đã xác nhận đơn hàng thành công';
+        if (newStatus === 'DangGiaoHang') message = 'Đã chuyển trạng thái sang đang giao hàng';
+        if (newStatus === 'DaHoanThanh') message = 'Đã hoàn thành đơn hàng';
+        
+        showNotification('success', message);
         fetchOrders(); // Refresh danh sách
       } else {
         showNotification('error', 'Không thể cập nhật trạng thái đơn hàng');
@@ -95,6 +122,35 @@ export default function OrdersManagement() {
       console.error(`Error updating order ${orderId} status:`, error);
       showNotification('error', 'Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng');
     }
+  };
+  
+  // Mở dialog xác nhận đơn hàng
+  const openConfirmApproveDialog = (orderId: number) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Xác nhận đơn hàng?',
+      description: 'Bạn có chắc muốn xác nhận đơn hàng này? Trạng thái sẽ chuyển thành Đang xử lý.',
+      confirmText: 'Xác nhận',
+      action: async () => handleApproveOrder(orderId),
+      variant: 'default',
+    });
+  };
+  
+  // Mở dialog hủy đơn hàng
+  const openConfirmCancelDialog = (orderId: number) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Xác nhận hủy?',
+      description: 'Bạn có chắc muốn hủy đơn hàng này? Hành động này không thể hoàn tác.',
+      confirmText: 'Hủy đơn hàng',
+      action: async () => handleCancelOrder(orderId),
+      variant: 'danger',
+    });
+  };
+  
+  // Đóng dialog
+  const closeConfirmDialog = () => {
+    setConfirmDialog(prev => ({ ...prev, open: false }));
   };
   
   // Hàm xử lý xác nhận đơn hàng "Chờ xác nhận" -> "Đang xử lý"
@@ -184,6 +240,18 @@ export default function OrdersManagement() {
   
   return (
     <div className="space-y-6">
+      {/* Dialog xác nhận */}
+      <AlertDialog
+        open={confirmDialog.open}
+        onOpenChange={closeConfirmDialog}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.action}
+        confirmText={confirmDialog.confirmText}
+        cancelText="Không, hủy bỏ"
+        variant={confirmDialog.variant}
+      />
+      
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
         
@@ -303,14 +371,14 @@ export default function OrdersManagement() {
                         {order.TrangThaiDonHang === 'ChoXacNhan' && (
                           <>
                             <button
-                              onClick={() => handleApproveOrder(order.MaDonHang)}
+                              onClick={() => openConfirmApproveDialog(order.MaDonHang)}
                               className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
                               title="Xác nhận đơn hàng"
                             >
                               <CheckCircle size={16} />
                             </button>
                             <button
-                              onClick={() => handleCancelOrder(order.MaDonHang)}
+                              onClick={() => openConfirmCancelDialog(order.MaDonHang)}
                               className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                               title="Hủy đơn hàng"
                             >
@@ -320,23 +388,41 @@ export default function OrdersManagement() {
                         )}
                         
                         {order.TrangThaiDonHang === 'DangXuLy' && (
-                          <button
-                            onClick={() => handleUpdateStatus(order.MaDonHang, 'DaXacNhan')}
-                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                            title="Xác nhận đơn hàng"
-                          >
-                            <CheckCircle size={16} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(order.MaDonHang, 'DaXacNhan')}
+                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                              title="Xác nhận đơn hàng"
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+                            <button
+                              onClick={() => openConfirmCancelDialog(order.MaDonHang)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                              title="Hủy đơn hàng"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          </>
                         )}
                         
                         {order.TrangThaiDonHang === 'DaXacNhan' && (
-                          <button
-                            onClick={() => handleUpdateStatus(order.MaDonHang, 'DangGiaoHang')}
-                            className="text-yellow-600 hover:text-yellow-900 p-1 rounded hover:bg-yellow-50"
-                            title="Xác nhận đang giao hàng"
-                          >
-                            <Truck size={16} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(order.MaDonHang, 'DangGiaoHang')}
+                              className="text-yellow-600 hover:text-yellow-900 p-1 rounded hover:bg-yellow-50"
+                              title="Xác nhận đang giao hàng"
+                            >
+                              <Truck size={16} />
+                            </button>
+                            <button
+                              onClick={() => openConfirmCancelDialog(order.MaDonHang)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                              title="Hủy đơn hàng"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          </>
                         )}
                         
                         {order.TrangThaiDonHang === 'DangGiaoHang' && (
@@ -346,16 +432,6 @@ export default function OrdersManagement() {
                             title="Xác nhận hoàn thành"
                           >
                             <Package size={16} />
-                          </button>
-                        )}
-                        
-                        {['DangXuLy', 'DaXacNhan'].includes(order.TrangThaiDonHang) && (
-                          <button
-                            onClick={() => handleCancelOrder(order.MaDonHang)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                            title="Hủy đơn hàng"
-                          >
-                            <XCircle size={16} />
                           </button>
                         )}
                       </div>
