@@ -23,6 +23,7 @@ import {
   LazyProcessingOrders,
   LazyDeliveredOrders,
   LazyCancelledOrders,
+  LazyOrderDetail,
   LazyProductsNew,
   LazyProductEdit
 } from './lib/lazy-components';
@@ -90,6 +91,7 @@ function App() {
           <Route path="orders/processing" element={<LazyProcessingOrders />} />
           <Route path="orders/delivered" element={<LazyDeliveredOrders />} />
           <Route path="orders/cancelled" element={<LazyCancelledOrders />} />
+          <Route path="orders/:id" element={<LazyOrderDetail />} />
           {/* Thêm các routes admin khác ở đây */}
         </Route>
 

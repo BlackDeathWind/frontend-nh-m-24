@@ -53,6 +53,7 @@ export const LazyPendingOrders = lazy(() => import('../pages/admin/orders/pendin
 export const LazyProcessingOrders = lazy(() => import('../pages/admin/orders/processing'));
 export const LazyDeliveredOrders = lazy(() => import('../pages/admin/orders/delivered'));
 export const LazyCancelledOrders = lazy(() => import('../pages/admin/orders/cancelled'));
+export const LazyOrderDetail = lazy(() => import('../pages/admin/orders/detail'));
 export const LazyProductsNew = lazy(() => import('../pages/admin/products/new'));
 export const LazyProductEdit = lazy(() => import('../pages/admin/products/edit'));
 

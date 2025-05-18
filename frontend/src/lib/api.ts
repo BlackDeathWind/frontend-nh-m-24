@@ -443,6 +443,16 @@ export const orderAPI = {
       throw error;
     }
   },
+  
+  getOrderDetail: async (id: string) => {
+    try {
+      const response = await api.get(`/don-hang/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Get order detail ${id} error:`, error);
+      throw error;
+    }
+  },
 
   updateOrderStatus: async (id: string, data: { status: string, adminNote?: string }) => {
     try {
